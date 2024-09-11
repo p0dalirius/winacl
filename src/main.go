@@ -8,6 +8,7 @@ import (
 
 	"winacl/ldap"
 	"winacl/logger"
+	"winacl/ntsecuritydescriptor"
 )
 
 var (
@@ -109,10 +110,18 @@ func main() {
 		ldapResults := ldap.QueryWholeSubtree(&ldapSession, "", query, attributes)
 
 		for _, entry := range ldapResults {
+			ntSecurityDescriptor := ntsecuritydescriptor.NtSecurityDescriptor{
+				RawBytes: entry.GetEqualFoldRawAttributeValue("ntSecurityDescriptor"),
+			}
+
 			if debug {
 				logger.Debug(fmt.Sprintf("| distinguishedName: %s", entry.GetAttributeValue("distinguishedName")))
-				logger.Debug(fmt.Sprintf("| ntSecurityDescriptor: %s", hex.EncodeToString(entry.GetEqualFoldRawAttributeValue("ntSecurityDescriptor"))))
+				logger.Debug(fmt.Sprintf("| ntSecurityDescriptor: %s", hex.EncodeToString(ntSecurityDescriptor.RawBytes)))
 			}
+
+			ntSecurityDescriptor.Parse()
+
+			ntSecurityDescriptor.Describe(0)
 		}
 
 	} else {
