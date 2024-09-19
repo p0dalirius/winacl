@@ -41,7 +41,7 @@ func (saclheader *SystemAccessControlListHeader) Describe(indent int) {
 	fmt.Printf("%s │ \x1b[93mRevision\x1b[0m : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, saclheader.Revision.Value, saclheader.Revision.Name)
 	fmt.Printf("%s │ \x1b[93mSbz1\x1b[0m     : \x1b[96m0x%02x\x1b[0m\n", indentPrompt, saclheader.Sbz1)
 	fmt.Printf("%s │ \x1b[93mAclSize\x1b[0m  : \x1b[96m0x%04x\x1b[0m\n", indentPrompt, saclheader.AclSize)
-	fmt.Printf("%s │ \x1b[93mAceCount\x1b[0m : \x1b[96m0x%08x\x1b[0m (%d)\x1b[0m\n", indentPrompt, saclheader.AceCount, saclheader.AceCount)
-	fmt.Printf("%s │ \x1b[93mSbz2\x1b[0m     : \x1b[96m0x%08x\x1b[0m\n", indentPrompt, saclheader.Sbz2)
+	fmt.Printf("%s │ \x1b[93mAceCount\x1b[0m : \x1b[96m0x%04x\x1b[0m (%d)\x1b[0m\n", indentPrompt, saclheader.AceCount, saclheader.AceCount)
+	fmt.Printf("%s │ \x1b[93mSbz2\x1b[0m     : \x1b[96m0x%04x\x1b[0m\n", indentPrompt, saclheader.Sbz2)
 	fmt.Printf("%s └─\n", indentPrompt)
 }

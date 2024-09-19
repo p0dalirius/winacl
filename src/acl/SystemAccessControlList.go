@@ -28,11 +28,13 @@ func (sacl *SystemAccessControlList) Parse(RawBytes []byte) {
 	for index := 0; index < int(sacl.Header.AceCount); index++ {
 		entry := ace.AccessControlEntry{}
 		entry.Parse(RawBytes)
-		entry.AceIndex = uint16(index + 1)
+		entry.Index = uint16(index + 1)
 		sacl.Entries = append(sacl.Entries, entry)
 		sacl.RawBytesSize += entry.RawBytesSize
 		RawBytes = RawBytes[entry.RawBytesSize:]
 	}
+
+	sacl.RawBytes = sacl.RawBytes[:sacl.RawBytesSize]
 }
 
 func (sacl *SystemAccessControlList) Describe(indent int) {

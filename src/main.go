@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"time"
 
 	"winacl/ldap"
 	"winacl/logger"
@@ -76,8 +75,6 @@ func parseArgs() {
 func main() {
 	parseArgs()
 
-	startTime := time.Now()
-
 	if debug {
 		if !useLdaps {
 			logger.Debug(fmt.Sprintf("Connecting to remote ldap://%s:%d ...", domainController, ldapPort))
@@ -127,12 +124,4 @@ func main() {
 			logger.Warn("Error: Could not create ldapSession.")
 		}
 	}
-
-	// Elapsed time
-	elapsedTime := time.Since(startTime).Round(time.Millisecond)
-	hours := int(elapsedTime.Hours())
-	minutes := int(elapsedTime.Minutes()) % 60
-	seconds := int(elapsedTime.Seconds()) % 60
-	milliseconds := int(elapsedTime.Milliseconds()) % 1000
-	logger.Info(fmt.Sprintf("Total time elapsed: %02dh%02dm%02d.%04ds", hours, minutes, seconds, milliseconds))
 }

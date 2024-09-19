@@ -26,11 +26,14 @@ func (dacl *DiscretionaryAccessControlList) Parse(RawBytes []byte) {
 	for index := 0; index < int(dacl.Header.AceCount); index++ {
 		entry := ace.AccessControlEntry{}
 		entry.Parse(RawBytes)
-		entry.AceIndex = uint16(index + 1)
+		entry.Index = uint16(index + 1)
 		dacl.Entries = append(dacl.Entries, entry)
 		dacl.RawBytesSize += entry.RawBytesSize
 		RawBytes = RawBytes[entry.RawBytesSize:]
+		fmt.Printf("RawBytes: %v\n", RawBytes)
 	}
+
+	dacl.RawBytes = dacl.RawBytes[:dacl.RawBytesSize]
 }
 
 func (dacl *DiscretionaryAccessControlList) Describe(indent int) {
