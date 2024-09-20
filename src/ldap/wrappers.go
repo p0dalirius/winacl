@@ -384,3 +384,19 @@ func GetDomain(ldapSession *Session, domain string) *Domain {
 
 	return nil
 }
+
+func GetAllNamingContexts(ldapSession *Session) []string {
+	// Fetch the RootDSE entry
+	rootDSE := GetRootDSE(ldapSession)
+	if rootDSE == nil {
+		return nil
+	}
+
+	// Retrieve the namingContexts attribute
+	namingContexts := rootDSE.GetAttributeValues("namingContexts")
+	if len(namingContexts) == 0 {
+		return nil
+	}
+
+	return namingContexts
+}

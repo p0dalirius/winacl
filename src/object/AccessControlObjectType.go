@@ -46,14 +46,14 @@ func (aco *AccessControlObjectType) Describe(indent int) {
 
 	if aco.Flags.Value == (ACCESS_CONTROL_OBJECT_TYPE_FLAG_INHERITED_OBJECT_TYPE_PRESENT | ACCESS_CONTROL_OBJECT_TYPE_FLAG_OBJECT_TYPE_PRESENT) {
 		fmt.Printf("%s │ \x1b[93mFlags\x1b[0m               : \x1b[96m0x%08x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.Flags.Value, aco.Flags.Name)
-		fmt.Printf("%s │ \x1b[93mObjectType\x1b[0m          : \x1b[96m%s\x1b[0m\n", indentPrompt, aco.ObjectType.GUID.ToFormatD())
-		fmt.Printf("%s │ \x1b[93mInheritedObjectType\x1b[0m : \x1b[96m%s\x1b[0m\n", indentPrompt, aco.InheritedObjectType.GUID.ToFormatD())
+		fmt.Printf("%s │ \x1b[93mObjectType\x1b[0m          : \x1b[96m%s\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.ObjectType.GUID.ToFormatD(), aco.ObjectType.GUID.LookupName())
+		fmt.Printf("%s │ \x1b[93mInheritedObjectType\x1b[0m : \x1b[96m%s\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.InheritedObjectType.GUID.ToFormatD(), aco.InheritedObjectType.GUID.LookupName())
 	} else if aco.Flags.Value == ACCESS_CONTROL_OBJECT_TYPE_FLAG_INHERITED_OBJECT_TYPE_PRESENT {
 		fmt.Printf("%s │ \x1b[93mFlags\x1b[0m               : \x1b[96m0x%08x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.Flags.Value, aco.Flags.Name)
-		fmt.Printf("%s │ \x1b[93mInheritedObjectType\x1b[0m : \x1b[96m%s\x1b[0m\n", indentPrompt, aco.InheritedObjectType.GUID.ToFormatD())
+		fmt.Printf("%s │ \x1b[93mInheritedObjectType\x1b[0m : \x1b[96m%s\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.InheritedObjectType.GUID.ToFormatD(), aco.InheritedObjectType.GUID.LookupName())
 	} else if aco.Flags.Value == ACCESS_CONTROL_OBJECT_TYPE_FLAG_OBJECT_TYPE_PRESENT {
 		fmt.Printf("%s │ \x1b[93mFlags\x1b[0m      : \x1b[96m0x%08x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.Flags.Value, aco.Flags.Name)
-		fmt.Printf("%s │ \x1b[93mObjectType\x1b[0m : \x1b[96m%s\x1b[0m\n", indentPrompt, aco.ObjectType.GUID.ToFormatD())
+		fmt.Printf("%s │ \x1b[93mObjectType\x1b[0m : \x1b[96m%s\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.ObjectType.GUID.ToFormatD(), aco.ObjectType.GUID.LookupName())
 	} else if aco.Flags.Value == ACCESS_CONTROL_OBJECT_TYPE_FLAG_NONE {
 		fmt.Printf("%s │ \x1b[93mFlags\x1b[0m : \x1b[96m0x%08x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aco.Flags.Value, aco.Flags.Name)
 	} else {

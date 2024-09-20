@@ -1,10 +1,11 @@
 package main
 
 import (
-	"encoding/hex"
 	"flag"
 	"fmt"
+	"time"
 
+	"winacl/guid"
 	"winacl/ldap"
 	"winacl/logger"
 	"winacl/securitydescriptor"
@@ -28,7 +29,7 @@ var (
 	authHashes   string
 	// authKey        string
 	// useKerberos    bool
-	distinguishedName string
+	//distinguishedName string
 )
 
 func parseArgs() {
@@ -58,8 +59,8 @@ func parseArgs() {
 	//flag.StringVar(&authKey, "aes-key", "", "AES key to use for Kerberos Authentication (128 or 256 bits)")
 	//flag.BoolVar(&useKerberos, "k", false, "Use Kerberos authentication. Grabs credentials from .ccache file (KRB5CCNAME) based on target parameters. If valid credentials cannot be found, it will use the ones specified in the command line")
 
-	flag.StringVar(&distinguishedName, "D", "", "distinguishedName.")
-	flag.StringVar(&distinguishedName, "distinguishedName", "", "distinguishedName.")
+	//flag.StringVar(&distinguishedName, "D", "", "distinguishedName.")
+	//flag.StringVar(&distinguishedName, "distinguishedName", "", "distinguishedName.")
 
 	flag.Parse()
 
@@ -74,6 +75,8 @@ func parseArgs() {
 
 func main() {
 	parseArgs()
+
+	startTime := time.Now()
 
 	if debug {
 		if !useLdaps {
@@ -97,26 +100,45 @@ func main() {
 	if connected {
 		logger.Info(fmt.Sprintf("Connected as '%s\\%s'", authDomain, authUsername))
 
-		query := fmt.Sprintf("(distinguishedName=%s)", distinguishedName)
-
+		//query := fmt.Sprintf("(distinguishedName=%s)", distinguishedName)
+		query := "(objectClass=*)"
 		if debug {
 			logger.Debug(fmt.Sprintf("LDAP query used: %s", query))
 		}
 
 		attributes := []string{"distinguishedName", "ntSecurityDescriptor"}
-		ldapResults := ldap.QueryWholeSubtree(&ldapSession, "", query, attributes)
+		ldapResults := ldap.QueryAllNamingContexts(&ldapSession, query, attributes, 2)
 
 		for _, entry := range ldapResults {
 			ntSecurityDescriptor := securitydescriptor.NtSecurityDescriptor{}
 
-			if debug {
-				logger.Debug(fmt.Sprintf("| distinguishedName: %s", entry.GetAttributeValue("distinguishedName")))
-				logger.Debug(fmt.Sprintf("| ntSecurityDescriptor: %s", hex.EncodeToString(entry.GetEqualFoldRawAttributeValue("ntSecurityDescriptor"))))
-			}
+			// if debug {
+			// 	logger.Debug(fmt.Sprintf("| distinguishedName: %s", entry.GetAttributeValue("distinguishedName")))
+			// 	logger.Debug(fmt.Sprintf("| ntSecurityDescriptor: %s", hex.EncodeToString(entry.GetEqualFoldRawAttributeValue("ntSecurityDescriptor"))))
+			// }
 
 			ntSecurityDescriptor.Parse(entry.GetEqualFoldRawAttributeValue("ntSecurityDescriptor"))
 
-			ntSecurityDescriptor.Describe(0)
+			//ntSecurityDescriptor.Describe(0)
+
+			extendedRights := []string{guid.EXTENDED_RIGHT_DS_REPLICATION_GET_CHANGES}
+			identities := ntSecurityDescriptor.FindIdentitiesWithAllExtendedRights(extendedRights)
+
+			if len(identities) != 0 {
+				fmt.Printf("[+] %s\n", entry.GetAttributeValue("distinguishedName"))
+
+				for sid, rights := range identities {
+					fmt.Printf(" ├──┬\x1b[93mSID\x1b[0m: \x1b[94m%s\x1b[0m (%s)\n", sid.ToString(), sid.LookupName())
+					fmt.Printf(" │  ├──┬\x1b[93mRights\x1b[0m:\n")
+					for k, right := range rights {
+						if k == (len(rights) - 1) {
+							fmt.Printf(" │  │  └── \x1b[95m%s\x1b[0m (\x1b[94m%s\x1b[0m)\n", right, guid.GUIDToExtendedRight[right])
+						} else {
+							fmt.Printf(" │  │  ├── \x1b[95m%s\x1b[0m (\x1b[94m%s\x1b[0m)\n", right, guid.GUIDToExtendedRight[right])
+						}
+					}
+				}
+			}
 		}
 
 	} else {
@@ -124,4 +146,13 @@ func main() {
 			logger.Warn("Error: Could not create ldapSession.")
 		}
 	}
+
+	// Elapsed time
+	elapsedTime := time.Since(startTime).Round(time.Millisecond)
+	hours := int(elapsedTime.Hours())
+	minutes := int(elapsedTime.Minutes()) % 60
+	seconds := int(elapsedTime.Seconds()) % 60
+	milliseconds := int(elapsedTime.Milliseconds()) % 1000
+	logger.Info(fmt.Sprintf("Total time elapsed: %02dh%02dm%02d.%04ds", hours, minutes, seconds, milliseconds))
+
 }

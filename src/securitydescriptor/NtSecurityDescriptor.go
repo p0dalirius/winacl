@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"winacl/acl"
+	"winacl/guid"
 	"winacl/identity"
 )
 
@@ -33,14 +34,12 @@ func (ntsd *NtSecurityDescriptor) Parse(RawBytes []byte) error {
 	if ntsd.Header.OffsetOwner != 0 {
 		ntsd.Owner.Parse(RawBytes[ntsd.Header.OffsetOwner:])
 		ntsd.RawBytesSize += ntsd.Owner.SID.RawBytesSize
-		ntsd.Owner.Describe(0)
 	}
 
 	// Parse Group if present
 	if ntsd.Header.OffsetGroup != 0 {
 		ntsd.Group.Parse(RawBytes[ntsd.Header.OffsetGroup:])
 		ntsd.RawBytesSize += ntsd.Group.SID.RawBytesSize
-		ntsd.Group.Describe(0)
 	}
 
 	// Parse DACL if present
@@ -48,7 +47,6 @@ func (ntsd *NtSecurityDescriptor) Parse(RawBytes []byte) error {
 		daclBytes := ntsd.RawBytes[ntsd.Header.OffsetDacl:]
 		ntsd.DACL.Parse(daclBytes)
 		ntsd.RawBytesSize += ntsd.DACL.RawBytesSize
-		ntsd.DACL.Describe(0)
 	}
 
 	// Parse SACL if present
@@ -56,7 +54,6 @@ func (ntsd *NtSecurityDescriptor) Parse(RawBytes []byte) error {
 		saclBytes := ntsd.RawBytes[ntsd.Header.OffsetSacl:]
 		ntsd.SACL.Parse(saclBytes)
 		ntsd.RawBytesSize += ntsd.SACL.RawBytesSize
-		ntsd.SACL.Describe(0)
 	}
 
 	return nil
@@ -114,4 +111,61 @@ func (ntsd *NtSecurityDescriptor) Describe(indent int) {
 	}
 
 	fmt.Println(" └─")
+}
+
+// Methods
+
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRights(extendedRights []string) map[*identity.SID][]string {
+	identitiesMap := make(map[*identity.SID][]string)
+
+	if len(extendedRights) == 0 {
+		return identitiesMap
+	}
+
+	for _, ace := range ntsd.DACL.Entries {
+		matchingRights := make([]string, 0)
+		for _, extendedRightGUID := range extendedRights {
+			if strings.EqualFold(ace.AccessControlObjectType.ObjectType.GUID.ToFormatD(), extendedRightGUID) {
+				if extendedRightName, exists := guid.GUIDToExtendedRight[extendedRightGUID]; exists {
+					matchingRights = append(matchingRights, extendedRightName)
+				} else {
+					matchingRights = append(matchingRights, extendedRightGUID)
+				}
+			}
+		}
+		if len(matchingRights) != 0 {
+			identitiesMap[&ace.SID.SID] = matchingRights
+		}
+	}
+
+	return identitiesMap
+}
+
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRights []string) map[*identity.SID][]string {
+	identitiesMap := make(map[*identity.SID][]string)
+
+	if len(extendedRights) == 0 {
+		return identitiesMap
+	}
+
+	for _, ace := range ntsd.DACL.Entries {
+		allRightsMatched := true
+		// fmt.Printf("ACE ID %d\n", ace.Index)
+		for _, extendedRightGUID := range extendedRights {
+			if strings.EqualFold(ace.AccessControlObjectType.ObjectType.GUID.ToFormatD(), extendedRightGUID) {
+				// Right is present
+				allRightsMatched = allRightsMatched && true
+			} else {
+				// Right is not present, skipping this identity
+				allRightsMatched = allRightsMatched && false
+				// fmt.Printf("break\n")
+				break
+			}
+		}
+		if allRightsMatched {
+			identitiesMap[&ace.SID.SID] = extendedRights
+		}
+	}
+
+	return identitiesMap
 }

@@ -227,3 +227,32 @@ func QueryWholeSubtree(ldapSession *Session, baseDN string, query string, attrib
 	entries := RawQuery(ldapSession, baseDN, query, attributes, ldap.ScopeWholeSubtree)
 	return entries
 }
+
+func QueryAllNamingContexts(ldapSession *Session, query string, attributes []string, scope int) []*ldap.Entry {
+	// Fetch the RootDSE entry to get the naming contexts
+	rootDSE := GetRootDSE(ldapSession)
+	if rootDSE == nil {
+		// logger.Warn("Could not retrieve RootDSE.")
+		return nil
+	}
+
+	// Retrieve the namingContexts attribute
+	namingContexts := rootDSE.GetAttributeValues("namingContexts")
+	if len(namingContexts) == 0 {
+		//logger.Warn("No naming contexts found.")
+		return nil
+	}
+
+	// Store all entries from all naming contexts
+	var allEntries []*ldap.Entry
+
+	// Iterate over each naming context and perform the query
+	for _, context := range namingContexts {
+		entries := RawQuery(ldapSession, context, query, attributes, scope)
+		if entries != nil {
+			allEntries = append(allEntries, entries...)
+		}
+	}
+
+	return allEntries
+}

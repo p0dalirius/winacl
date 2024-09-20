@@ -30,7 +30,6 @@ func (dacl *DiscretionaryAccessControlList) Parse(RawBytes []byte) {
 		dacl.Entries = append(dacl.Entries, entry)
 		dacl.RawBytesSize += entry.RawBytesSize
 		RawBytes = RawBytes[entry.RawBytesSize:]
-		fmt.Printf("RawBytes: %v\n", RawBytes)
 	}
 
 	dacl.RawBytes = dacl.RawBytes[:dacl.RawBytesSize]

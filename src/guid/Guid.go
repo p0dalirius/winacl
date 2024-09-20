@@ -187,3 +187,17 @@ func (guid *GUID) ToFormatX() string {
 		hexE1, hexE2, hexE3, hexE4, hexE5, hexE6,
 	)
 }
+
+func (guid *GUID) LookupName() string {
+	formatD := guid.ToFormatD()
+
+	if name, exists := GUIDToExtendedRight[formatD]; exists {
+		return name
+	} else if name, exists := GUIDToPropertySet[formatD]; exists {
+		return name
+	} else if name, exists := GUIDToSchemaAttributeDisplayName[formatD]; exists {
+		return fmt.Sprintf("LDAP Attribute: %s", name)
+	} else {
+		return "?"
+	}
+}
