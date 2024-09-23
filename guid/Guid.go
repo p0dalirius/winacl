@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/p0dalirius/winacl/rights"
+	"github.com/p0dalirius/winacl/schema"
 )
 
 type GUID struct {
@@ -191,11 +194,11 @@ func (guid *GUID) ToFormatX() string {
 func (guid *GUID) LookupName() string {
 	formatD := guid.ToFormatD()
 
-	if name, exists := GUIDToExtendedRight[formatD]; exists {
+	if name, exists := rights.GUIDToExtendedRight[formatD]; exists {
 		return name
-	} else if name, exists := GUIDToPropertySet[formatD]; exists {
+	} else if name, exists := schema.GUIDToPropertySet[formatD]; exists {
 		return name
-	} else if name, exists := GUIDToSchemaAttributeDisplayName[formatD]; exists {
+	} else if name, exists := schema.GUIDToSchemaAttributeDisplayName[formatD]; exists {
 		return fmt.Sprintf("LDAP Attribute: %s", name)
 	} else {
 		return "?"

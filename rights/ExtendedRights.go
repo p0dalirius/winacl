@@ -1,4 +1,4 @@
-package guid
+package rights
 
 const (
 	EXTENDED_RIGHT_ABANDON_REPLICATION                           = "ee914b82-0a98-11d1-adbb-00c04fd8d5cd"

@@ -1,4 +1,4 @@
-package guid
+package schema
 
 const (
 	PROPERTY_SET_ACCOUNT_RESTRICTIONS                   = "4c164200-20c0-11d0-a768-00aa006e0529"
