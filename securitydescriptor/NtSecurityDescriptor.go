@@ -3,9 +3,10 @@ package securitydescriptor
 import (
 	"fmt"
 	"strings"
-	"winacl/acl"
-	"winacl/guid"
-	"winacl/identity"
+
+	"github.com/p0dalirius/winacl/acl"
+	"github.com/p0dalirius/winacl/guid"
+	"github.com/p0dalirius/winacl/identity"
 )
 
 type NtSecurityDescriptor struct {

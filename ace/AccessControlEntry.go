@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"winacl/identity"
-	"winacl/object"
+	"github.com/p0dalirius/winacl/identity"
+	"github.com/p0dalirius/winacl/object"
 )
 
 type AccessControlEntry struct {

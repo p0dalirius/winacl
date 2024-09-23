@@ -3,7 +3,8 @@ package acl
 import (
 	"fmt"
 	"strings"
-	"winacl/ace"
+
+	"github.com/p0dalirius/winacl/ace"
 )
 
 type SystemAccessControlList struct {

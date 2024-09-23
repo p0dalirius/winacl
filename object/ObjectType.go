@@ -3,7 +3,8 @@ package object
 import (
 	"fmt"
 	"strings"
-	"winacl/guid"
+
+	"github.com/p0dalirius/winacl/guid"
 )
 
 type ObjectType struct {
