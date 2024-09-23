@@ -115,6 +115,20 @@ func (ntsd *NtSecurityDescriptor) Describe(indent int) {
 
 // Methods
 
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithExtendedRight(extendedRightGUID string) map[*identity.SID][]string {
+	identitiesMap := make(map[*identity.SID][]string)
+
+	for _, ace := range ntsd.DACL.Entries {
+		matchingRights := make([]string, 0)
+		if strings.EqualFold(ace.AccessControlObjectType.ObjectType.GUID.ToFormatD(), extendedRightGUID) {
+			matchingRights = append(matchingRights, extendedRightGUID)
+			identitiesMap[&ace.SID.SID] = matchingRights
+		}
+	}
+
+	return identitiesMap
+}
+
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRight(extendedRightsGUIDs []string) map[*identity.SID][]string {
 	identitiesMap := make(map[*identity.SID][]string)
 
@@ -160,6 +174,20 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRi
 		}
 		if allRightsMatched {
 			identitiesMap[&ace.SID.SID] = extendedRightsGUIDs
+		}
+	}
+
+	return identitiesMap
+}
+
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithRight(accessMaskRightValue uint32) map[*identity.SID][]uint32 {
+	identitiesMap := make(map[*identity.SID][]uint32)
+
+	for _, ace := range ntsd.DACL.Entries {
+		matchingRights := make([]uint32, 0)
+		if ace.Mask.Value&accessMaskRightValue == accessMaskRightValue {
+			matchingRights = append(matchingRights, accessMaskRightValue)
+			identitiesMap[&ace.SID.SID] = matchingRights
 		}
 	}
 
