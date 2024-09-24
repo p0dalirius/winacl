@@ -251,11 +251,12 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedRights(expectedRig
 
 	for specificRight, expectedIdentities := range expectedRightsToIdentitiesMap {
 
-		unexpectedIdentities[specificRight] = make([]*identity.SID, 0)
-
-		for identity := range ntsd.FindIdentitiesWithRight(specificRight) {
-			if !slices.Contains(expectedIdentities, identity.ToString()) {
-				unexpectedIdentities[specificRight] = append(unexpectedIdentities[specificRight], identity)
+		for id := range ntsd.FindIdentitiesWithRight(specificRight) {
+			if !slices.Contains(expectedIdentities, id.ToString()) {
+				if _, ok := unexpectedIdentities[specificRight]; !ok {
+					unexpectedIdentities[specificRight] = make([]*identity.SID, 0)
+				}
+				unexpectedIdentities[specificRight] = append(unexpectedIdentities[specificRight], id)
 			}
 		}
 
@@ -269,11 +270,12 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedExtendedRights(exp
 
 	for specificExtendedRightGUID, expectedIdentities := range expectedExtendedRightsToIdentitiesMap {
 
-		unexpectedIdentities[specificExtendedRightGUID] = make([]*identity.SID, 0)
-
-		for identity := range ntsd.FindIdentitiesWithExtendedRight(specificExtendedRightGUID) {
-			if !slices.Contains(expectedIdentities, identity.ToString()) {
-				unexpectedIdentities[specificExtendedRightGUID] = append(unexpectedIdentities[specificExtendedRightGUID], identity)
+		for id := range ntsd.FindIdentitiesWithExtendedRight(specificExtendedRightGUID) {
+			if !slices.Contains(expectedIdentities, id.ToString()) {
+				if _, ok := unexpectedIdentities[specificExtendedRightGUID]; !ok {
+					unexpectedIdentities[specificExtendedRightGUID] = make([]*identity.SID, 0)
+				}
+				unexpectedIdentities[specificExtendedRightGUID] = append(unexpectedIdentities[specificExtendedRightGUID], id)
 			}
 		}
 
