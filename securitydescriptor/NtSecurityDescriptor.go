@@ -115,22 +115,22 @@ func (ntsd *NtSecurityDescriptor) Describe(indent int) {
 
 // Methods
 
-func (ntsd *NtSecurityDescriptor) FindIdentitiesWithExtendedRight(extendedRightGUID string) map[*identity.Identity][]string {
-	identitiesMap := make(map[*identity.Identity][]string)
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithExtendedRight(extendedRightGUID string) map[*identity.SID][]string {
+	identitiesMap := make(map[*identity.SID][]string)
 
 	for _, ace := range ntsd.DACL.Entries {
 		matchingRights := make([]string, 0)
 		if strings.EqualFold(ace.AccessControlObjectType.ObjectType.GUID.ToFormatD(), extendedRightGUID) {
 			matchingRights = append(matchingRights, extendedRightGUID)
-			identitiesMap[&ace.SID] = matchingRights
+			identitiesMap[&ace.SID.SID] = matchingRights
 		}
 	}
 
 	return identitiesMap
 }
 
-func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRight(extendedRightsGUIDs []string) map[*identity.Identity][]string {
-	identitiesMap := make(map[*identity.Identity][]string)
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRight(extendedRightsGUIDs []string) map[*identity.SID][]string {
+	identitiesMap := make(map[*identity.SID][]string)
 
 	if len(extendedRightsGUIDs) == 0 {
 		return identitiesMap
@@ -144,15 +144,15 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRight(extendedRig
 			}
 		}
 		if len(matchingRights) != 0 {
-			identitiesMap[&ace.SID] = matchingRights
+			identitiesMap[&ace.SID.SID] = matchingRights
 		}
 	}
 
 	return identitiesMap
 }
 
-func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRightsGUIDs []string) map[*identity.Identity][]string {
-	identitiesMap := make(map[*identity.Identity][]string)
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRightsGUIDs []string) map[*identity.SID][]string {
+	identitiesMap := make(map[*identity.SID][]string)
 
 	if len(extendedRightsGUIDs) == 0 {
 		return identitiesMap
@@ -173,29 +173,29 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRi
 			}
 		}
 		if allRightsMatched {
-			identitiesMap[&ace.SID] = extendedRightsGUIDs
+			identitiesMap[&ace.SID.SID] = extendedRightsGUIDs
 		}
 	}
 
 	return identitiesMap
 }
 
-func (ntsd *NtSecurityDescriptor) FindIdentitiesWithRight(accessMaskRightValue uint32) map[*identity.Identity][]uint32 {
-	identitiesMap := make(map[*identity.Identity][]uint32)
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithRight(accessMaskRightValue uint32) map[*identity.SID][]uint32 {
+	identitiesMap := make(map[*identity.SID][]uint32)
 
 	for _, ace := range ntsd.DACL.Entries {
 		matchingRights := make([]uint32, 0)
 		if ace.Mask.Value&accessMaskRightValue == accessMaskRightValue {
 			matchingRights = append(matchingRights, accessMaskRightValue)
-			identitiesMap[&ace.SID] = matchingRights
+			identitiesMap[&ace.SID.SID] = matchingRights
 		}
 	}
 
 	return identitiesMap
 }
 
-func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyRight(accessMaskRights []uint32) map[*identity.Identity][]uint32 {
-	identitiesMap := make(map[*identity.Identity][]uint32)
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyRight(accessMaskRights []uint32) map[*identity.SID][]uint32 {
+	identitiesMap := make(map[*identity.SID][]uint32)
 
 	if len(accessMaskRights) == 0 {
 		return identitiesMap
@@ -209,15 +209,15 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyRight(accessMaskRights []
 			}
 		}
 		if len(matchingRights) != 0 {
-			identitiesMap[&ace.SID] = matchingRights
+			identitiesMap[&ace.SID.SID] = matchingRights
 		}
 	}
 
 	return identitiesMap
 }
 
-func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights []uint32) map[*identity.Identity][]uint32 {
-	identitiesMap := make(map[*identity.Identity][]uint32)
+func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights []uint32) map[*identity.SID][]uint32 {
+	identitiesMap := make(map[*identity.SID][]uint32)
 
 	if len(accessMaskRights) == 0 {
 		return identitiesMap
@@ -238,7 +238,7 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights [
 			}
 		}
 		if allRightsMatched {
-			identitiesMap[&ace.SID] = accessMaskRights
+			identitiesMap[&ace.SID.SID] = accessMaskRights
 		}
 	}
 
