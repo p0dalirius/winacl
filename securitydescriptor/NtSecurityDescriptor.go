@@ -2,6 +2,7 @@ package securitydescriptor
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/p0dalirius/winacl/acl"
@@ -243,4 +244,22 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights [
 	}
 
 	return identitiesMap
+}
+
+func (ntsd *NtSecurityDescriptor) FindUnexpectedIdentities(expectedIdentitiesWithRights map[uint32][]string) map[uint32][]*identity.SID {
+	unexpectedIdentities := map[uint32][]*identity.SID{}
+
+	for dangerousRight, expectedMembers := range expectedIdentitiesWithRights {
+
+		unexpectedIdentities[dangerousRight] = make([]*identity.SID, 0)
+
+		for identity := range ntsd.FindIdentitiesWithRight(dangerousRight) {
+			if !slices.Contains(expectedMembers, identity.ToString()) {
+				unexpectedIdentities[dangerousRight] = append(unexpectedIdentities[dangerousRight], identity)
+			}
+		}
+
+	}
+
+	return unexpectedIdentities
 }
