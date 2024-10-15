@@ -3,6 +3,7 @@ package ace
 import (
 	"encoding/binary"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/p0dalirius/winacl/rights"
@@ -21,7 +22,16 @@ func (acm *AccessControlMask) Parse(RawBytes []byte) {
 	acm.RawBytesSize = 4
 	acm.Value = binary.LittleEndian.Uint32(RawBytes[:acm.RawBytesSize])
 
-	for RightValue, RightName := range rights.RightValueToRightName {
+	// Sort right names to avoid random placement of flags
+	listOfRightNames := []string{}
+	for _, RightName := range rights.RightValueToRightName {
+		listOfRightNames = append(listOfRightNames, RightName)
+	}
+	sort.Strings(listOfRightNames)
+
+	// Parse flags
+	for _, RightName := range listOfRightNames {
+		RightValue := rights.RightNameToRightValue[RightName]
 		if (acm.Value & RightValue) == RightValue {
 			acm.Flags = append(acm.Flags, RightName)
 		}
