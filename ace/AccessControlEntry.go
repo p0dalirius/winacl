@@ -24,6 +24,7 @@ func (ace *AccessControlEntry) Parse(RawBytes []byte) {
 
 	// Parse Header
 	ace.Header.Parse(RawBytes)
+	ace.RawBytes = RawBytes
 	RawBytes = RawBytes[ace.Header.RawBytesSize:]
 	ace.RawBytesSize += ace.Header.RawBytesSize
 
@@ -406,6 +407,9 @@ func (ace *AccessControlEntry) Parse(RawBytes []byte) {
 	default:
 		//
 	}
+
+	// Crop to content
+	ace.RawBytes = ace.RawBytes[:ace.RawBytesSize]
 }
 
 func (ace *AccessControlEntry) Describe(indent int) {
