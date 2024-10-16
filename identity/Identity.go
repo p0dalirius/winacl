@@ -8,9 +8,14 @@ import (
 type Identity struct {
 	Name string
 	SID  SID
+	// Internal
+	RawBytes     []byte
+	RawBytesSize uint32
 }
 
 func (identity *Identity) Parse(RawBytes []byte) {
+	identity.RawBytes = RawBytes
+
 	identity.SID.Parse(RawBytes)
 
 	wellKnownSIDs := map[string]string{
@@ -72,6 +77,8 @@ func (identity *Identity) Parse(RawBytes []byte) {
 	if name, exists := wellKnownSIDs[sidString]; exists {
 		identity.Name = name
 	}
+
+	identity.RawBytesSize = identity.SID.RawBytesSize
 }
 
 func (identity *Identity) Describe(indent int) {
