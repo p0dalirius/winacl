@@ -186,7 +186,7 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithRight(accessMaskRightValue u
 
 	for _, ace := range ntsd.DACL.Entries {
 		matchingRights := make([]uint32, 0)
-		if ace.Mask.Value&accessMaskRightValue == accessMaskRightValue {
+		if slices.Contains(ace.Mask.Values, accessMaskRightValue) {
 			matchingRights = append(matchingRights, accessMaskRightValue)
 			identitiesMap[&ace.SID.SID] = matchingRights
 		}
@@ -205,7 +205,7 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyRight(accessMaskRights []
 	for _, ace := range ntsd.DACL.Entries {
 		matchingRights := make([]uint32, 0)
 		for _, accessMaskRightValue := range accessMaskRights {
-			if ace.Mask.Value&accessMaskRightValue == accessMaskRightValue {
+			if slices.Contains(ace.Mask.Values, accessMaskRightValue) {
 				matchingRights = append(matchingRights, accessMaskRightValue)
 			}
 		}
@@ -228,7 +228,7 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights [
 		allRightsMatched := true
 		// fmt.Printf("ACE ID %d\n", ace.Index)
 		for _, accessMaskRightValue := range accessMaskRights {
-			if ace.Mask.Value&accessMaskRightValue == accessMaskRightValue {
+			if slices.Contains(ace.Mask.Values, accessMaskRightValue) {
 				// Right is present
 				allRightsMatched = allRightsMatched && true
 			} else {
