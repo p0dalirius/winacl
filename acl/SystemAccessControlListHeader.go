@@ -27,9 +27,13 @@ func (saclheader *SystemAccessControlListHeader) Parse(RawBytes []byte) error {
 	saclheader.RawBytesSize = 8
 
 	saclheader.Revision.Parse(uint8(RawBytes[0]))
+
 	saclheader.Sbz1 = RawBytes[1]
+
 	saclheader.AclSize = binary.LittleEndian.Uint16(RawBytes[2:4])
+
 	saclheader.AceCount = binary.LittleEndian.Uint16(RawBytes[4:6])
+
 	saclheader.Sbz2 = binary.LittleEndian.Uint16(RawBytes[6:8])
 
 	return nil
