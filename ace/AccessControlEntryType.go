@@ -24,54 +24,64 @@ const (
 
 )
 
+// AccessControlEntryType represents the type of an Access Control Entry (ACE)
+// in the security descriptor of an object. Each ACE defines the access rights
+// that are granted or denied to a user or group for a specific object.
+//
+// The struct contains the following fields:
+//
+// - Name: A string representing the human-readable name of the ACE type.
+// - Value: An integer representing the corresponding value of the ACE type.
 type AccessControlEntryType struct {
 	Name  string
 	Value int
 }
 
+// AccessControlEntryTypeValueToName maps integer values representing Access
+// Control Entry (ACE) types to their corresponding string names. This is
+// used for easy lookups when interpreting ACE types.
+//
+// The keys are typically defined constants that correspond to various
+// ACE types within the Windows security model, providing a human-readable
+// representation of these types.
+var AccessControlEntryTypeValueToName = map[int]string{
+	ACE_TYPE_ACCESS_ALLOWED:                 "ACCESS_ALLOWED",
+	ACE_TYPE_ACCESS_DENIED:                  "ACCESS_DENIED",
+	ACE_TYPE_SYSTEM_AUDIT:                   "SYSTEM_AUDIT",
+	ACE_TYPE_SYSTEM_ALARM:                   "SYSTEM_ALARM",
+	ACE_TYPE_ACCESS_ALLOWED_COMPOUND:        "ACCESS_ALLOWED_COMPOUND",
+	ACE_TYPE_ACCESS_ALLOWED_OBJECT:          "ACCESS_ALLOWED_OBJECT",
+	ACE_TYPE_ACCESS_DENIED_OBJECT:           "ACCESS_DENIED_OBJECT",
+	ACE_TYPE_SYSTEM_AUDIT_OBJECT:            "SYSTEM_AUDIT_OBJECT",
+	ACE_TYPE_SYSTEM_ALARM_OBJECT:            "SYSTEM_ALARM_OBJECT",
+	ACE_TYPE_ACCESS_ALLOWED_CALLBACK:        "ACCESS_ALLOWED_CALLBACK",
+	ACE_TYPE_ACCESS_DENIED_CALLBACK:         "ACCESS_DENIED_CALLBACK",
+	ACE_TYPE_ACCESS_ALLOWED_CALLBACK_OBJECT: "ACCESS_ALLOWED_CALLBACK_OBJECT",
+	ACE_TYPE_ACCESS_DENIED_CALLBACK_OBJECT:  "ACCESS_DENIED_CALLBACK_OBJECT",
+	ACE_TYPE_SYSTEM_AUDIT_CALLBACK:          "SYSTEM_AUDIT_CALLBACK",
+	ACE_TYPE_SYSTEM_ALARM_CALLBACK:          "SYSTEM_ALARM_CALLBACK",
+	ACE_TYPE_SYSTEM_AUDIT_CALLBACK_OBJECT:   "SYSTEM_AUDIT_CALLBACK_OBJECT",
+	ACE_TYPE_SYSTEM_ALARM_CALLBACK_OBJECT:   "SYSTEM_ALARM_CALLBACK_OBJECT",
+	ACE_TYPE_SYSTEM_MANDATORY_LABEL:         "SYSTEM_MANDATORY_LABEL",
+	ACE_TYPE_SYSTEM_RESOURCE_ATTRIBUTE:      "SYSTEM_RESOURCE_ATTRIBUTE",
+	ACE_TYPE_SYSTEM_SCOPED_POLICY_ID:        "SYSTEM_SCOPED_POLICY_ID",
+}
+
+// Parse sets the Value of the AccessControlEntryType and looks up its name
+// from a predefined map of ACE types to names. If the ACE type is not found
+// in the map, it assigns the name as "?".
+//
+// Attributes:
+//   - flagValue (int): The integer value representing the access control
+//     entry type. This value is typically defined by the Windows security
+//     model and indicates the type of access control entry.
 func (acetype *AccessControlEntryType) Parse(flagValue int) {
+	// Set the value of the ACE type
 	acetype.Value = flagValue
 
-	if flagValue == ACE_TYPE_ACCESS_ALLOWED {
-		acetype.Name = "ACCESS_ALLOWED"
-	} else if flagValue == ACE_TYPE_ACCESS_DENIED {
-		acetype.Name = "ACCESS_DENIED"
-	} else if flagValue == ACE_TYPE_SYSTEM_AUDIT {
-		acetype.Name = "SYSTEM_AUDIT"
-	} else if flagValue == ACE_TYPE_SYSTEM_ALARM {
-		acetype.Name = "SYSTEM_ALARM"
-	} else if flagValue == ACE_TYPE_ACCESS_ALLOWED_COMPOUND {
-		acetype.Name = "ACCESS_ALLOWED_COMPOUND"
-	} else if flagValue == ACE_TYPE_ACCESS_ALLOWED_OBJECT {
-		acetype.Name = "ACCESS_ALLOWED_OBJECT"
-	} else if flagValue == ACE_TYPE_ACCESS_DENIED_OBJECT {
-		acetype.Name = "ACCESS_DENIED_OBJECT"
-	} else if flagValue == ACE_TYPE_SYSTEM_AUDIT_OBJECT {
-		acetype.Name = "SYSTEM_AUDIT_OBJECT"
-	} else if flagValue == ACE_TYPE_SYSTEM_ALARM_OBJECT {
-		acetype.Name = "SYSTEM_ALARM_OBJECT"
-	} else if flagValue == ACE_TYPE_ACCESS_ALLOWED_CALLBACK {
-		acetype.Name = "ACCESS_ALLOWED_CALLBACK"
-	} else if flagValue == ACE_TYPE_ACCESS_DENIED_CALLBACK {
-		acetype.Name = "ACCESS_DENIED_CALLBACK"
-	} else if flagValue == ACE_TYPE_ACCESS_ALLOWED_CALLBACK_OBJECT {
-		acetype.Name = "ACCESS_ALLOWED_CALLBACK_OBJECT"
-	} else if flagValue == ACE_TYPE_ACCESS_DENIED_CALLBACK_OBJECT {
-		acetype.Name = "ACCESS_DENIED_CALLBACK_OBJECT"
-	} else if flagValue == ACE_TYPE_SYSTEM_AUDIT_CALLBACK {
-		acetype.Name = "SYSTEM_AUDIT_CALLBACK"
-	} else if flagValue == ACE_TYPE_SYSTEM_ALARM_CALLBACK {
-		acetype.Name = "SYSTEM_ALARM_CALLBACK"
-	} else if flagValue == ACE_TYPE_SYSTEM_AUDIT_CALLBACK_OBJECT {
-		acetype.Name = "SYSTEM_AUDIT_CALLBACK_OBJECT"
-	} else if flagValue == ACE_TYPE_SYSTEM_ALARM_CALLBACK_OBJECT {
-		acetype.Name = "SYSTEM_ALARM_CALLBACK_OBJECT"
-	} else if flagValue == ACE_TYPE_SYSTEM_MANDATORY_LABEL {
-		acetype.Name = "SYSTEM_MANDATORY_LABEL"
-	} else if flagValue == ACE_TYPE_SYSTEM_RESOURCE_ATTRIBUTE {
-		acetype.Name = "SYSTEM_RESOURCE_ATTRIBUTE"
-	} else if flagValue == ACE_TYPE_SYSTEM_SCOPED_POLICY_ID {
-		acetype.Name = "SYSTEM_SCOPED_POLICY_ID"
+	// Lookup the name from the map, defaulting to "?" if not found
+	if name, found := AccessControlEntryTypeValueToName[flagValue]; found {
+		acetype.Name = name
 	} else {
 		acetype.Name = "?"
 	}
