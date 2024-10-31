@@ -3,6 +3,7 @@ package ace
 import (
 	"encoding/binary"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -51,6 +52,17 @@ func (acm *AccessControlMask) Parse(RawBytes []byte) {
 			acm.Values = append(acm.Values, RightValue) // Add the value of the right
 		}
 	}
+}
+
+// HasRight checks if a specific right is set within the ACE's Mask.
+//
+// Parameters:
+// - right: The integer value of the right to check.
+//
+// Returns:
+// - bool: true if the specified right is set, false otherwise.
+func (acm *AccessControlMask) HasRight(right uint32) bool {
+	return slices.Contains(acm.Values, right)
 }
 
 // Describe outputs the AccessControlMask details in a formatted manner.
