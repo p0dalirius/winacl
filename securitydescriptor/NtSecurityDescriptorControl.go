@@ -86,3 +86,13 @@ func (nsdc *NtSecurityDescriptorControl) FromBytes(rawValue uint16) {
 		}
 	}
 }
+
+// HasControl checks if a specific control bit is set in the RawValue.
+// Parameters:
+//   - control (uint16): The control flag to check (NT_SECURITY_DESCRIPTOR_CONTROL_*).
+//
+// Returns:
+//   - bool: True if the specified control bit is set, false otherwise.
+func (nsdc *NtSecurityDescriptorControl) HasControl(control uint16) bool {
+	return (nsdc.RawValue & control) == control
+}
