@@ -11,36 +11,57 @@ const (
 	ACE_FLAG_SUCCESSFUL_ACCESS    = 0x40 // Used with system-audit ACEs in a system access control list (SACL) to generate audit messages for successful access attempts.
 	ACE_FLAG_FAILED_ACCESS        = 0x80 // Used with system-audit ACEs in a system access control list (SACL) to generate audit messages for failed access attempts.
 	ACE_FLAG_AUDIT_FLAGS          = 0xc0 // All access attempts are audited.
-
 )
 
+// AccessControlEntryFlag represents an access control entry (ACE) flag.
+// It contains the flag's name for easy identification and its corresponding
+// integer value, which represents the flag as defined in the Windows
+// security model. This struct is useful for managing and interpreting
+// access control entries in security descriptors.
+//
+// Attributes:
+//   - Name (string): The name of the access control entry flag, which
+//     provides a human-readable description of the flag.
+//   - Value (int): The integer value that represents the flag, typically
+//     defined by the security model, allowing for bitwise operations to
+//     determine permissions and access rights.
 type AccessControlEntryFlag struct {
-	Name  string
-	Value int
+	RawValue uint8
+	Values   []uint8
+	Flags    []string
 }
 
-func (aceflag *AccessControlEntryFlag) Parse(flagValue int) {
-	aceflag.Value = flagValue
+// Define a map of access control entry flag values to their names.
+var AccessControlEntryFlagToName = map[uint8]string{
+	ACE_FLAG_NONE:                 "NONE",
+	ACE_FLAG_OBJECT_INHERIT:       "OBJECT_INHERIT",
+	ACE_FLAG_CONTAINER_INHERIT:    "CONTAINER_INHERIT",
+	ACE_FLAG_NO_PROPAGATE_INHERIT: "NO_PROPAGATE_INHERIT",
+	ACE_FLAG_INHERIT_ONLY:         "INHERIT_ONLY",
+	ACE_FLAG_INHERITED:            "INHERITED",
+	ACE_FLAG_SUCCESSFUL_ACCESS:    "SUCCESSFUL_ACCESS",
+	ACE_FLAG_FAILED_ACCESS:        "FAILED_ACCESS",
+	ACE_FLAG_AUDIT_FLAGS:          "AUDIT_FLAGS",
+}
 
-	if flagValue == ACE_FLAG_NONE {
-		aceflag.Name = "NONE"
-	} else if flagValue == ACE_FLAG_OBJECT_INHERIT {
-		aceflag.Name = "OBJECT_INHERIT"
-	} else if flagValue == ACE_FLAG_CONTAINER_INHERIT {
-		aceflag.Name = "CONTAINER_INHERIT"
-	} else if flagValue == ACE_FLAG_NO_PROPAGATE_INHERIT {
-		aceflag.Name = "NO_PROPAGATE_INHERIT"
-	} else if flagValue == ACE_FLAG_INHERIT_ONLY {
-		aceflag.Name = "INHERIT_ONLY"
-	} else if flagValue == ACE_FLAG_INHERITED {
-		aceflag.Name = "INHERITED"
-	} else if flagValue == ACE_FLAG_SUCCESSFUL_ACCESS {
-		aceflag.Name = "SUCCESSFUL_ACCESS"
-	} else if flagValue == ACE_FLAG_FAILED_ACCESS {
-		aceflag.Name = "FAILED_ACCESS"
-	} else if flagValue == ACE_FLAG_AUDIT_FLAGS {
-		aceflag.Name = "AUDIT_FLAGS"
-	} else {
-		aceflag.Name = "?"
+// Parse sets the Value of the AccessControlEntryFlag and looks up its name
+// from a predefined map of flag values to names. If the flag value is not
+// found in the map, it assigns the name as "?".
+//
+// Attributes:
+//   - flagValue (int): The integer value representing the access control
+//     entry flag. This value is typically defined by the Windows security
+//     model and determines the permissions or behavior associated with the
+//     flag.
+func (aceflag *AccessControlEntryFlag) Parse(rawValue uint8) {
+	aceflag.RawValue = rawValue
+	aceflag.Values = []uint8{}
+	aceflag.Flags = []string{}
+
+	for flagValue, flagName := range AccessControlEntryFlagToName {
+		if (aceflag.RawValue & flagValue) == flagValue {
+			aceflag.Values = append(aceflag.Values, flagValue)
+			aceflag.Flags = append(aceflag.Flags, flagName)
+		}
 	}
 }
