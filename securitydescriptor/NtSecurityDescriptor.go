@@ -259,7 +259,6 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedRights(expectedRig
 				unexpectedIdentities[specificRight] = append(unexpectedIdentities[specificRight], id)
 			}
 		}
-
 	}
 
 	return unexpectedIdentities
@@ -278,7 +277,6 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedExtendedRights(exp
 				unexpectedIdentities[specificExtendedRightGUID] = append(unexpectedIdentities[specificExtendedRightGUID], id)
 			}
 		}
-
 	}
 
 	return unexpectedIdentities
