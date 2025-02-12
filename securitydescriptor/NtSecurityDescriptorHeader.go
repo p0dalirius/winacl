@@ -56,7 +56,7 @@ func (ntsd *NtSecurityDescriptorHeader) Parse(RawBytes []byte) error {
 	ntsd.Sbz1 = RawBytes[1]
 
 	ntsd.Control = NtSecurityDescriptorControl{}
-	ntsd.Control.FromBytes(binary.LittleEndian.Uint16(RawBytes[2:4]))
+	ntsd.Control.FromBytes(RawBytes[2:4])
 
 	ntsd.OffsetOwner = binary.LittleEndian.Uint32(RawBytes[4:8])
 

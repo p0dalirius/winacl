@@ -76,8 +76,8 @@ var NtSecurityDescriptorControlValueToShortName = map[uint16]string{
 //
 // Parameters:
 //   - rawValue (uint16): The raw value to be parsed, representing the control flags as a bitmask.
-func (nsdc *NtSecurityDescriptorControl) FromBytes(rawValue uint16) {
-	nsdc.RawValue = rawValue
+func (nsdc *NtSecurityDescriptorControl) FromBytes(rawValue []byte) {
+	nsdc.RawValue = binary.LittleEndian.Uint16(rawValue)
 	nsdc.Values = []uint16{}
 	nsdc.Flags = []string{}
 

@@ -51,3 +51,16 @@ func TestNtSecurityDescriptor_Involution(t *testing.T) {
 		t.Errorf("Involution failed: Output of ntsd2.ToBytes() is not equal to input hex string")
 	}
 }
+
+// func TestNtSecurityDescriptor_Describe(t *testing.T) {
+// 	testNtsdHex := "0100149ccc000000e800000014000000a000000004008c00030000000240140020000c00010100000000000100000000075a38002000000003000000be3b0ef3f09fd111b6030000f80367c1a57a96bfe60dd011a28500aa003049e2010100000000000100000000075a38002000000003000000bf3b0ef3f09fd111b6030000f80367c1a57a96bfe60dd011a28500aa003049e201010000000000010000000002002c000100000000002400ff010f0001050000000000051500000028bb82279261b9fe2474aa5d0002000001050000000000051500000028bb82279261b9fe2474aa5d0002000001050000000000051500000028bb82279261b9fe20"
+
+// 	ntsd := &NtSecurityDescriptor{}
+// 	ntsdBytes, err := hex.DecodeString(testNtsdHex)
+// 	if err != nil {
+// 		t.Errorf("Failed to decode testNtsdHex: %v", err)
+// 	}
+// 	ntsd.Parse(ntsdBytes)
+
+// 	ntsd.Describe(0)
+// }

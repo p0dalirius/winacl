@@ -1,6 +1,7 @@
 package ace
 
 import (
+	"encoding/hex"
 	"fmt"
 	"slices"
 	"strings"
@@ -34,6 +35,10 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 	ace.RawBytes = rawBytes
 	rawBytes = rawBytes[ace.Header.RawBytesSize:]
 	ace.RawBytesSize += ace.Header.RawBytesSize
+
+	fmt.Printf("ACE Type: %d\n", ace.Header.Type.Value)
+	fmt.Printf("rawBytes size: %d\n", len(rawBytes))
+	fmt.Printf("rawBytes: %s\n", hex.EncodeToString(rawBytes))
 
 	switch ace.Header.Type.Value {
 	case ACE_TYPE_ACCESS_ALLOWED:
@@ -424,7 +429,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 // Returns:
 //   - []byte: The serialized byte slice representing the ACE.
 func (ace *AccessControlEntry) ToBytes() []byte {
-	var serializedData []byte
+	serializedData := make([]byte, 0)
 
 	serializedData = append(serializedData, ace.Header.ToBytes()...)
 

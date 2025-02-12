@@ -73,11 +73,13 @@ func (aceheader *AccessControlEntryHeader) Parse(RawBytes []byte) {
 // Returns:
 //   - []byte: The serialized byte slice representing the ACE header.
 func (aceheader *AccessControlEntryHeader) ToBytes() []byte {
-	var serializedData []byte
+	serializedData := make([]byte, 0)
 
-	serializedData = append(serializedData, byte(aceheader.Type.Value))
+	serializedData = append(serializedData, aceheader.Type.ToBytes()...)
 	serializedData = append(serializedData, aceheader.Flags.ToBytes()...)
-	serializedData = append(serializedData, byte(aceheader.Size))
+	buffer := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buffer, aceheader.Size)
+	serializedData = append(serializedData, buffer...)
 
 	return serializedData
 }
@@ -92,7 +94,7 @@ func (aceheader *AccessControlEntryHeader) ToBytes() []byte {
 func (aceheader *AccessControlEntryHeader) Describe(indent int) {
 	indentPrompt := strings.Repeat(" │ ", indent)
 	fmt.Printf("%s<AccessControlEntryHeader>\n", indentPrompt)
-	fmt.Printf("%s │ \x1b[93mType\x1b[0m  : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aceheader.Type.Value, aceheader.Type.Name)
+	fmt.Printf("%s │ \x1b[93mType\x1b[0m  : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aceheader.Type.Value, aceheader.Type.String())
 	fmt.Printf("%s │ \x1b[93mFlags\x1b[0m : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aceheader.Flags.RawValue, strings.Join(aceheader.Flags.Flags, "|"))
 	fmt.Printf("%s │ \x1b[93mSize\x1b[0m  : \x1b[96m0x%04x\x1b[0m\n", indentPrompt, aceheader.Size)
 	fmt.Printf("%s └─\n", indentPrompt)
