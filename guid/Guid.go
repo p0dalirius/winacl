@@ -40,11 +40,24 @@ type GUID struct {
 // - A pointer to a newly generated GUID.
 func NewGUID() *GUID {
 	a := uint32(rand.Uint32())
+
 	b := uint16(rand.Uint32() & 0xFFFF)
+
 	c := uint16(rand.Uint32() & 0xFFFF)
+
 	d := uint16(rand.Uint32() & 0xFFFF)
+
 	e := uint64(rand.Uint32())<<32 | uint64(rand.Uint32())
+	e = e & 0xFFFFFFFFFFFF
+
 	return &GUID{A: a, B: b, C: c, D: d, E: e}
+}
+
+// Equal checks if two GUIDs are equal.
+//
+// The function compares the two GUIDs and returns true if they are equal, false otherwise.
+func (guid *GUID) Equal(other *GUID) bool {
+	return guid.A == other.A && guid.B == other.B && guid.C == other.C && guid.D == other.D && guid.E == other.E
 }
 
 // Parse functions ===================================================================
@@ -60,10 +73,19 @@ func NewGUID() *GUID {
 // - A pointer to the parsed GUID.
 func (guid *GUID) FromRawBytes(data []byte) {
 	guid.A = uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24
+
 	guid.B = uint16(data[4]) | uint16(data[5])<<8
+
 	guid.C = uint16(data[6]) | uint16(data[7])<<8
+
 	guid.D = uint16(data[8])<<8 | uint16(data[9])
-	guid.E = uint64(data[10])<<40 | uint64(data[11])<<32 | uint64(data[12])<<24 | uint64(data[13])<<16 | uint64(data[14])<<8 | uint64(data[15])
+
+	guid.E = uint64(data[10]) << 40
+	guid.E = guid.E | uint64(data[11])<<32
+	guid.E = guid.E | uint64(data[12])<<24
+	guid.E = guid.E | uint64(data[13])<<16
+	guid.E = guid.E | uint64(data[14])<<8
+	guid.E = guid.E | uint64(data[15])
 }
 
 // FromFormatN parses a GUID from a string in the format N.
@@ -231,13 +253,13 @@ func FromFormatX(data string) (*GUID, error) {
 
 // Export functions ===================================================================
 
-// ToRawBytes returns the raw byte array representation of the GUID.
+// ToBytes returns the raw byte array representation of the GUID.
 //
 // The function converts the GUID into a byte array.
 //
 // Returns:
 // - A byte array containing the raw bytes of the GUID.
-func (guid *GUID) ToRawBytes() []byte {
+func (guid *GUID) ToBytes() []byte {
 	data := make([]byte, 0)
 	data = append(data, byte(guid.A), byte(guid.A>>8), byte(guid.A>>16), byte(guid.A>>24))
 	data = append(data, byte(guid.B), byte(guid.B>>8))
@@ -246,7 +268,7 @@ func (guid *GUID) ToRawBytes() []byte {
 	eBytes := make([]byte, 6)
 
 	for i := 0; i < 6; i++ {
-		eBytes[5-i] = byte(guid.E >> (i * 8))
+		eBytes[5-i] = byte((guid.E >> uint64(i*8)) & 0xff)
 	}
 
 	data = append(data, eBytes...)
