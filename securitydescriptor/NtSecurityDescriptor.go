@@ -9,6 +9,7 @@ import (
 	"github.com/p0dalirius/winacl/identity"
 )
 
+// NtSecurityDescriptor represents a Windows security descriptor.
 type NtSecurityDescriptor struct {
 	Header NtSecurityDescriptorHeader
 
@@ -23,8 +24,15 @@ type NtSecurityDescriptor struct {
 	RawBytesSize uint32
 }
 
-func (ntsd *NtSecurityDescriptor) Parse(RawBytes []byte) error {
-	ntsd.RawBytes = RawBytes
+// Parse initializes the NtSecurityDescriptor struct by parsing the raw byte array.
+//
+// Parameters:
+//   - rawBytes ([]byte): The raw byte array to be parsed.
+//
+// Returns:
+//   - error: An error if parsing fails, otherwise nil.
+func (ntsd *NtSecurityDescriptor) Parse(rawBytes []byte) error {
+	ntsd.RawBytes = rawBytes
 	ntsd.RawBytesSize = 0
 
 	// Parse the header
@@ -33,13 +41,13 @@ func (ntsd *NtSecurityDescriptor) Parse(RawBytes []byte) error {
 
 	// Parse Owner if present
 	if ntsd.Header.OffsetOwner != 0 {
-		ntsd.Owner.Parse(RawBytes[ntsd.Header.OffsetOwner:])
+		ntsd.Owner.Parse(rawBytes[ntsd.Header.OffsetOwner:])
 		ntsd.RawBytesSize += ntsd.Owner.SID.RawBytesSize
 	}
 
 	// Parse Group if present
 	if ntsd.Header.OffsetGroup != 0 {
-		ntsd.Group.Parse(RawBytes[ntsd.Header.OffsetGroup:])
+		ntsd.Group.Parse(rawBytes[ntsd.Header.OffsetGroup:])
 		ntsd.RawBytesSize += ntsd.Group.SID.RawBytesSize
 	}
 
@@ -60,6 +68,10 @@ func (ntsd *NtSecurityDescriptor) Parse(RawBytes []byte) error {
 	return nil
 }
 
+// Describe prints the NtSecurityDescriptor in a human-readable format.
+//
+// Parameters:
+//   - indent (int): The indentation level for the output.
 func (ntsd *NtSecurityDescriptor) Describe(indent int) {
 	fmt.Println("<NTSecurityDescriptor>")
 
@@ -114,8 +126,15 @@ func (ntsd *NtSecurityDescriptor) Describe(indent int) {
 	fmt.Println(" └─")
 }
 
-// Methods
+// Methods ========================================================================
 
+// FindIdentitiesWithExtendedRight finds identities that have a specific extended right.
+//
+// Parameters:
+//   - extendedRightGUID (string): The GUID of the extended right to search for.
+//
+// Returns:
+//   - map[*identity.SID][]string: A map of identities to their matching extended rights.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithExtendedRight(extendedRightGUID string) map[*identity.SID][]string {
 	identitiesMap := make(map[*identity.SID][]string)
 
@@ -130,6 +149,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithExtendedRight(extendedRightG
 	return identitiesMap
 }
 
+// FindIdentitiesWithAnyExtendedRight finds identities that have any of the specified extended rights.
+//
+// Parameters:
+//   - extendedRightsGUIDs ([]string): The GUIDs of the extended rights to search for.
+//
+// Returns:
+//   - map[*identity.SID][]string: A map of identities to their matching extended rights.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRight(extendedRightsGUIDs []string) map[*identity.SID][]string {
 	identitiesMap := make(map[*identity.SID][]string)
 
@@ -152,6 +178,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyExtendedRight(extendedRig
 	return identitiesMap
 }
 
+// FindIdentitiesWithAllExtendedRights finds identities that have all of the specified extended rights.
+//
+// Parameters:
+//   - extendedRightsGUIDs ([]string): The GUIDs of the extended rights to search for.
+//
+// Returns:
+//   - map[*identity.SID][]string: A map of identities to their matching extended rights.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRightsGUIDs []string) map[*identity.SID][]string {
 	identitiesMap := make(map[*identity.SID][]string)
 
@@ -181,6 +214,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllExtendedRights(extendedRi
 	return identitiesMap
 }
 
+// FindIdentitiesWithRight finds identities that have a specific access mask right.
+//
+// Parameters:
+//   - accessMaskRightValue (uint32): The access mask right value to search for.
+//
+// Returns:
+//   - map[*identity.SID][]uint32: A map of identities to their matching access mask rights.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithRight(accessMaskRightValue uint32) map[*identity.SID][]uint32 {
 	identitiesMap := make(map[*identity.SID][]uint32)
 
@@ -195,6 +235,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithRight(accessMaskRightValue u
 	return identitiesMap
 }
 
+// FindIdentitiesWithAnyRight finds identities that have any of the specified access mask rights.
+//
+// Parameters:
+//   - accessMaskRights ([]uint32): The access mask rights to search for.
+//
+// Returns:
+//   - map[*identity.SID][]uint32: A map of identities to their matching access mask rights.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyRight(accessMaskRights []uint32) map[*identity.SID][]uint32 {
 	identitiesMap := make(map[*identity.SID][]uint32)
 
@@ -217,6 +264,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAnyRight(accessMaskRights []
 	return identitiesMap
 }
 
+// FindIdentitiesWithAllRights finds identities that have all of the specified access mask rights.
+//
+// Parameters:
+//   - accessMaskRights ([]uint32): The access mask rights to search for.
+//
+// Returns:
+//   - map[*identity.SID][]uint32: A map of identities to their matching access mask rights.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights []uint32) map[*identity.SID][]uint32 {
 	identitiesMap := make(map[*identity.SID][]uint32)
 
@@ -246,6 +300,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithAllRights(accessMaskRights [
 	return identitiesMap
 }
 
+// FindIdentitiesWithUnexpectedRights finds identities that have unexpected access mask rights.
+//
+// Parameters:
+//   - expectedRightsToIdentitiesMap (map[uint32][]string): A map of expected access mask rights to their corresponding identities.
+//
+// Returns:
+//   - map[uint32][]*identity.SID: A map of unexpected access mask rights to their corresponding identities.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedRights(expectedRightsToIdentitiesMap map[uint32][]string) map[uint32][]*identity.SID {
 	unexpectedIdentities := map[uint32][]*identity.SID{}
 
@@ -264,6 +325,13 @@ func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedRights(expectedRig
 	return unexpectedIdentities
 }
 
+// FindIdentitiesWithUnexpectedExtendedRights finds identities that have unexpected extended rights.
+//
+// Parameters:
+//   - expectedExtendedRightsToIdentitiesMap (map[string][]string): A map of expected extended rights to their corresponding identities.
+//
+// Returns:
+//   - map[string][]*identity.SID: A map of unexpected extended rights to their corresponding identities.
 func (ntsd *NtSecurityDescriptor) FindIdentitiesWithUnexpectedExtendedRights(expectedExtendedRightsToIdentitiesMap map[string][]string) map[string][]*identity.SID {
 	unexpectedIdentities := map[string][]*identity.SID{}
 
