@@ -68,6 +68,20 @@ func (aceheader *AccessControlEntryHeader) Parse(RawBytes []byte) {
 	aceheader.RawBytesSize = 4
 }
 
+// ToBytes serializes the AccessControlEntryHeader struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the ACE header.
+func (aceheader *AccessControlEntryHeader) ToBytes() []byte {
+	var serializedData []byte
+
+	serializedData = append(serializedData, byte(aceheader.Type.Value))
+	serializedData = append(serializedData, aceheader.Flags.ToBytes()...)
+	serializedData = append(serializedData, byte(aceheader.Size))
+
+	return serializedData
+}
+
 // Describe prints a human-readable representation of the AccessControlEntryHeader struct.
 // It displays the type, flags, and size of the access control entry, formatted with indentation
 // to reflect the structure's hierarchy in a tree-like manner.

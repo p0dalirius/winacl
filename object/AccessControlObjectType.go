@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// AccessControlObjectType represents the access control object type.
 type AccessControlObjectType struct {
 	Flags               AccessControlObjectTypeFlags
 	ObjectType          ObjectType
@@ -15,6 +16,14 @@ type AccessControlObjectType struct {
 	RawBytesSize uint32
 }
 
+// Parse sets the Value of the AccessControlObjectType and looks up its name
+// from a predefined map of ACE types to names. If the ACE type is not found
+// in the map, it assigns the name as "?".
+//
+// Attributes:
+//   - flagValue (int): The integer value representing the access control
+//     entry type. This value is typically defined by the Windows security
+//     model and indicates the type of access control entry.
 func (aco *AccessControlObjectType) Parse(RawBytes []byte) {
 	aco.RawBytesSize = 0
 
@@ -39,6 +48,22 @@ func (aco *AccessControlObjectType) Parse(RawBytes []byte) {
 	}
 }
 
+// ToBytes serializes the AccessControlObjectType struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the AccessControlObjectType.
+func (aco *AccessControlObjectType) ToBytes() []byte {
+	var serializedData []byte
+
+	serializedData = append(serializedData, aco.Flags.ToBytes()...)
+
+	return serializedData
+}
+
+// Describe prints a human-readable representation of the AccessControlObjectType.
+//
+// Attributes:
+//   - indent (int): The indentation level for the output.
 func (aco *AccessControlObjectType) Describe(indent int) {
 	indentPrompt := strings.Repeat(" │ ", indent)
 

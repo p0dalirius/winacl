@@ -68,6 +68,46 @@ func (ntsd *NtSecurityDescriptor) Parse(rawBytes []byte) error {
 	return nil
 }
 
+func (ntsd *NtSecurityDescriptor) ToBytes() []byte {
+	// Initialize a byte slice to hold the serialized data
+	var serializedData []byte
+
+	dataSacl := ntsd.SACL.ToBytes()
+	offsetSacl := 20 // (0x00000014)
+	dataDacl := ntsd.DACL.ToBytes()
+	offsetDacl := 20 + len(dataSacl)
+	dataOwner := ntsd.Owner.SID.ToBytes()
+	offsetOwner := 20 + len(dataSacl) + len(dataDacl)
+	dataGroup := ntsd.Group.SID.ToBytes()
+	offsetGroup := 20 + len(dataSacl) + len(dataDacl) + len(dataOwner)
+
+	// Update the header and append the header bytes
+	ntsd.Header.OffsetOwner = uint32(offsetOwner)
+	ntsd.Header.OffsetGroup = uint32(offsetGroup)
+	ntsd.Header.OffsetSacl = uint32(offsetSacl)
+	ntsd.Header.OffsetDacl = uint32(offsetDacl)
+	serializedData = append(serializedData, ntsd.Header.ToBytes()...)
+
+	// Append the SACL bytes if present
+	if ntsd.Header.OffsetSacl != 0 {
+		serializedData = append(serializedData, dataSacl...)
+	}
+	// Append the DACL bytes if present
+	if ntsd.Header.OffsetDacl != 0 {
+		serializedData = append(serializedData, dataDacl...)
+	}
+	// Append the Owner SID bytes if present
+	if ntsd.Header.OffsetOwner != 0 {
+		serializedData = append(serializedData, dataOwner...)
+	}
+	// Append the Group SID bytes if present
+	if ntsd.Header.OffsetGroup != 0 {
+		serializedData = append(serializedData, dataGroup...)
+	}
+
+	return serializedData
+}
+
 // Describe prints the NtSecurityDescriptor in a human-readable format.
 //
 // Parameters:

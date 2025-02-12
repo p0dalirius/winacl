@@ -40,6 +40,14 @@ func (identity *Identity) Parse(RawBytes []byte) {
 	identity.RawBytesSize = identity.SID.RawBytesSize
 }
 
+// ToBytes serializes the Identity struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the Identity.
+func (identity *Identity) ToBytes() []byte {
+	return identity.SID.ToBytes()
+}
+
 // Describe prints a detailed description of the Identity struct, including its SID and name,
 // formatted with indentation for clarity.
 //

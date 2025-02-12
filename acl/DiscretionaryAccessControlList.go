@@ -7,6 +7,7 @@ import (
 	"github.com/p0dalirius/winacl/ace"
 )
 
+// DiscretionaryAccessControlList represents a Discretionary Access Control List (DACL).
 type DiscretionaryAccessControlList struct {
 	Header  DiscretionaryAccessControlListHeader
 	Entries []ace.AccessControlEntry
@@ -15,27 +16,54 @@ type DiscretionaryAccessControlList struct {
 	RawBytesSize uint32
 }
 
-func (dacl *DiscretionaryAccessControlList) Parse(RawBytes []byte) {
+// Parse initializes the DiscretionaryAccessControlList struct by parsing the raw byte slice.
+// It sets the RawBytes and RawBytesSize fields, parses the header, and then parses each ACE.
+//
+// Parameters:
+//   - rawBytes ([]byte): The raw byte slice to be parsed.
+func (dacl *DiscretionaryAccessControlList) Parse(rawBytes []byte) {
 	dacl.RawBytesSize = 0
-	dacl.RawBytes = RawBytes
+	dacl.RawBytes = rawBytes
 
-	dacl.Header.Parse(RawBytes)
+	dacl.Header.Parse(rawBytes)
 	dacl.RawBytesSize += dacl.Header.RawBytesSize
-	RawBytes = RawBytes[dacl.RawBytesSize:]
+	rawBytes = rawBytes[dacl.RawBytesSize:]
 
 	// Parse all ACEs
 	for index := 0; index < int(dacl.Header.AceCount); index++ {
 		entry := ace.AccessControlEntry{}
-		entry.Parse(RawBytes)
+		entry.Parse(rawBytes)
 		entry.Index = uint16(index + 1)
 		dacl.Entries = append(dacl.Entries, entry)
 		dacl.RawBytesSize += entry.RawBytesSize
-		RawBytes = RawBytes[entry.RawBytesSize:]
+		rawBytes = rawBytes[entry.RawBytesSize:]
 	}
 
 	dacl.RawBytes = dacl.RawBytes[:dacl.RawBytesSize]
 }
 
+// ToBytes serializes the DiscretionaryAccessControlList struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the DACL.
+func (dacl *DiscretionaryAccessControlList) ToBytes() []byte {
+	var serializedData []byte
+
+	serializedData = append(serializedData, dacl.Header.ToBytes()...)
+
+	for _, ace := range dacl.Entries {
+		serializedData = append(serializedData, ace.ToBytes()...)
+	}
+
+	return serializedData
+}
+
+// Describe prints a detailed description of the DiscretionaryAccessControlList struct,
+// including its attributes formatted with indentation for clarity.
+//
+// Parameters:
+//   - indent (int): The indentation level for formatting the output. Each level increases
+//     the indentation depth, allowing for a hierarchical display of the DACL's components.
 func (dacl *DiscretionaryAccessControlList) Describe(indent int) {
 	indentPrompt := strings.Repeat(" │ ", indent)
 

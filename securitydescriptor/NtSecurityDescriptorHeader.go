@@ -69,6 +69,29 @@ func (ntsd *NtSecurityDescriptorHeader) Parse(RawBytes []byte) error {
 	return nil
 }
 
+// ToBytes serializes the NtSecurityDescriptorHeader struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the security descriptor header.
+func (ntsdh *NtSecurityDescriptorHeader) ToBytes() []byte {
+	serializedData := []byte{}
+
+	serializedData = append(serializedData, ntsdh.Revision)
+	serializedData = append(serializedData, ntsdh.Sbz1)
+	serializedData = append(serializedData, ntsdh.Control.ToBytes()...)
+	buffer := make([]byte, 4)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetOwner)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetGroup)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetSacl)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetDacl)
+	serializedData = append(serializedData, buffer...)
+
+	return serializedData
+}
+
 // Describe prints a detailed description of the NtSecurityDescriptorHeader struct,
 // including its attributes formatted with indentation for clarity.
 //

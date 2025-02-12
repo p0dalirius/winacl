@@ -1,5 +1,7 @@
 package securitydescriptor
 
+import "encoding/binary"
+
 // NtSecurityDescriptorControl represents the control flags for a NT Security Descriptor.
 // The fields are defined as constants to represent their bit positions.
 type NtSecurityDescriptorControl struct {
@@ -85,6 +87,16 @@ func (nsdc *NtSecurityDescriptorControl) FromBytes(rawValue uint16) {
 			nsdc.Flags = append(nsdc.Flags, flagName)
 		}
 	}
+}
+
+// ToBytes serializes the NtSecurityDescriptorControl struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the security descriptor control.
+func (nsdc *NtSecurityDescriptorControl) ToBytes() []byte {
+	serializedData := make([]byte, 2)
+	binary.LittleEndian.PutUint16(serializedData, nsdc.RawValue)
+	return serializedData
 }
 
 // HasControl checks if a specific control bit is set in the RawValue.

@@ -289,31 +289,31 @@ func (sid *SID) ToBytes() []byte {
 // Parameters:
 //   - RawBytes ([]byte): A byte slice containing the binary representation of the SID.
 //     The slice must be at least of sufficient length to contain all SID components.
-func (sid *SID) FromBytes(RawBytes []byte) {
+func (sid *SID) FromBytes(rawBytes []byte) {
 	sid.RawBytesSize = 0
 
-	sid.RevisionLevel = uint8(RawBytes[0])
+	sid.RevisionLevel = uint8(rawBytes[0])
 	sid.RawBytesSize += 1
 
-	sid.SubAuthorityCount = uint8(RawBytes[1])
+	sid.SubAuthorityCount = uint8(rawBytes[1])
 	sid.RawBytesSize += 1
 
 	sid.IdentifierAuthority = 0
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(RawBytes[2:4])) >> 16
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(RawBytes[4:6])) >> 8
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(RawBytes[6:8]))
+	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[2:4])) >> 16
+	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[4:6])) >> 8
+	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[6:8]))
 	sid.RawBytesSize += 6
 
 	sid.SubAuthorities = make([]uint32, sid.SubAuthorityCount-1)
 	for i := 0; i < int(sid.SubAuthorityCount-1); i++ {
-		sid.SubAuthorities[i] = binary.LittleEndian.Uint32(RawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
+		sid.SubAuthorities[i] = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
 		sid.RawBytesSize += 4
 	}
 
-	sid.RelativeIdentifier = binary.LittleEndian.Uint32(RawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
+	sid.RelativeIdentifier = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
 	sid.RawBytesSize += 4
 
-	sid.RawBytes = RawBytes[:sid.RawBytesSize]
+	sid.RawBytes = rawBytes[:sid.RawBytesSize]
 }
 
 // FromString populates the SID struct fields from a provided SID string representation.
