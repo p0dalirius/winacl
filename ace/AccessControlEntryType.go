@@ -74,9 +74,9 @@ var AccessControlEntryTypeValueToName = map[uint8]string{
 //   - flagValue (int): The integer value representing the access control
 //     entry type. This value is typically defined by the Windows security
 //     model and indicates the type of access control entry.
-func (acetype *AccessControlEntryType) Parse(flagValue int) {
+func (acetype *AccessControlEntryType) Parse(rawValue []byte) {
 	// Set the value of the ACE type
-	acetype.Value = uint8(flagValue)
+	acetype.Value = uint8(rawValue[0])
 }
 
 // ToBytes serializes the AccessControlEntryType struct into a byte slice.

@@ -29,6 +29,9 @@ func (aclrev *AccessControlListRevision) ToBytes() []byte {
 }
 
 // String returns the string representation of the AccessControlListRevision struct.
+//
+// Returns:
+//   - string: The string representation of the AccessControlListRevision.
 func (aclrev *AccessControlListRevision) String() string {
 	if aclrev.Value == ACL_REVISION_DS {
 		return "ACL_REVISION_DS"

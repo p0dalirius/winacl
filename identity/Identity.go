@@ -27,10 +27,10 @@ type Identity struct {
 //
 // Parameters:
 //   - RawBytes ([]byte): The raw byte data containing the SID information.
-func (identity *Identity) Parse(RawBytes []byte) {
-	identity.RawBytes = RawBytes
+func (identity *Identity) Parse(rawBytes []byte) {
+	identity.RawBytes = rawBytes
 
-	identity.SID.FromBytes(RawBytes)
+	identity.SID.FromBytes(rawBytes)
 
 	sidString := identity.SID.ToString()
 	if name, exists := WellKnownSIDs[sidString]; exists {

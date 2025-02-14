@@ -24,13 +24,13 @@ type AccessControlMask struct {
 
 // Parse populates the AccessControlMask from raw byte data.
 // It extracts the RawValue and determines the corresponding flags and their names.
-func (acm *AccessControlMask) Parse(RawBytes []byte) {
+func (acm *AccessControlMask) Parse(rawBytes []byte) {
 	// Store the raw bytes and set the size
-	acm.RawBytes = RawBytes
+	acm.RawBytes = rawBytes
 	acm.RawBytesSize = 4
 
 	// Convert raw bytes to a uint32 value using little-endian format
-	acm.RawValue = binary.LittleEndian.Uint32(RawBytes[:acm.RawBytesSize])
+	acm.RawValue = binary.LittleEndian.Uint32(rawBytes[:acm.RawBytesSize])
 
 	// Prepare a list of right names and sort them for consistent ordering
 	listOfRightNames := make([]string, 0, len(rights.RightValueToRightName))

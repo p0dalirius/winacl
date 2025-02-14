@@ -28,18 +28,20 @@ type AccessControlEntry struct {
 // Parameters:
 //   - rawBytes ([]byte): The raw byte slice to be parsed.
 func (ace *AccessControlEntry) Parse(rawBytes []byte) {
+	debug := false
 	ace.RawBytesSize = 0
-
 	// Parse Header
 	ace.Header.Parse(rawBytes)
-	ace.RawBytes = rawBytes
-	rawBytes = rawBytes[ace.Header.RawBytesSize:]
-	ace.RawBytesSize += ace.Header.RawBytesSize
+	ace.RawBytesSize = uint32(ace.Header.Size)
 
-	fmt.Printf("ACE Type: %d\n", ace.Header.Type.Value)
-	fmt.Printf("rawBytes size: %d\n", len(rawBytes))
-	fmt.Printf("rawBytes: %s\n", hex.EncodeToString(rawBytes))
+	// Update rawBytes to only contain the ACE data
+	ace.RawBytes = rawBytes[:ace.Header.Size]
+	rawBytes = rawBytes[ace.Header.RawBytesSize:ace.Header.Size]
 
+	if debug {
+		fmt.Printf("[debug][AccessControlEntry.Parse()] ACE Type: %s\n", AccessControlEntryTypeValueToName[ace.Header.Type.Value])
+		fmt.Printf("[debug][AccessControlEntry.Parse()] rawBytes: %s\n", hex.EncodeToString(ace.RawBytes))
+	}
 	switch ace.Header.Type.Value {
 	case ACE_TYPE_ACCESS_ALLOWED:
 		// Parsing ACE of type ACCESS_ALLOWED_ACE_TYPE
@@ -48,11 +50,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 	case ACE_TYPE_ACCESS_DENIED:
 		// Parsing ACE of type ACCESS_DENIED_ACE_TYPE
@@ -61,11 +63,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 	case ACE_TYPE_SYSTEM_AUDIT:
 		// Parsing ACE of type SYSTEM_AUDIT_ACE_TYPE
@@ -74,11 +76,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 	case ACE_TYPE_SYSTEM_ALARM:
 		// Parsing ACE of type SYSTEM_ALARM_ACE_TYPE
@@ -101,11 +103,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		ace.AccessControlObjectType.Parse(rawBytes)
 		rawBytes = rawBytes[ace.AccessControlObjectType.RawBytesSize:]
-		ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
+		// ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
 		// Flags  (4 bytes): A 32-bit unsigned integer that specifies a set of bit flags that
 		// indicate whether the ObjectType and InheritedObjectType fields contain valid data.
 		// This parameter can be one or more of the following values.
@@ -123,7 +125,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 	case ACE_TYPE_ACCESS_DENIED_OBJECT:
 		// Parsing ACE of type ACCESS_DENIED_OBJECT_ACE_TYPE
@@ -132,11 +134,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		ace.AccessControlObjectType.Parse(rawBytes)
 		rawBytes = rawBytes[ace.AccessControlObjectType.RawBytesSize:]
-		ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
+		// ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
 		// Flags  (4 bytes): A 32-bit unsigned integer that specifies a set of bit flags that
 		// indicate whether the ObjectType and InheritedObjectType fields contain valid data.
 		// This parameter can be one or more of the following values.
@@ -154,7 +156,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 	case ACE_TYPE_SYSTEM_AUDIT_OBJECT:
 		// Parsing ACE of type SYSTEM_AUDIT_OBJECT_ACE_TYPE
@@ -163,11 +165,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		ace.AccessControlObjectType.Parse(rawBytes)
 		rawBytes = rawBytes[ace.AccessControlObjectType.RawBytesSize:]
-		ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
+		// ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
 		// Flags  (4 bytes): A 32-bit unsigned integer that specifies a set of bit flags that
 		// indicate whether the ObjectType and InheritedObjectType fields contain valid data.
 		// This parameter can be one or more of the following values.
@@ -185,7 +187,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -204,11 +206,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -221,11 +223,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -238,11 +240,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		ace.AccessControlObjectType.Parse(rawBytes)
 		rawBytes = rawBytes[ace.AccessControlObjectType.RawBytesSize:]
-		ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
+		// ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
 		// Flags  (4 bytes): A 32-bit unsigned integer that specifies a set of bit flags that
 		// indicate whether the ObjectType and InheritedObjectType fields contain valid data.
 		// This parameter can be one or more of the following values.
@@ -260,7 +262,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -273,11 +275,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		ace.AccessControlObjectType.Parse(rawBytes)
 		rawBytes = rawBytes[ace.AccessControlObjectType.RawBytesSize:]
-		ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
+		// ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
 		// Flags  (4 bytes): A 32-bit unsigned integer that specifies a set of bit flags that
 		// indicate whether the ObjectType and InheritedObjectType fields contain valid data.
 		// This parameter can be one or more of the following values.
@@ -295,7 +297,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -308,11 +310,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -333,11 +335,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		ace.AccessControlObjectType.Parse(rawBytes)
 		rawBytes = rawBytes[ace.AccessControlObjectType.RawBytesSize:]
-		ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
+		// ace.RawBytesSize += ace.AccessControlObjectType.RawBytesSize
 		// Flags  (4 bytes): A 32-bit unsigned integer that specifies a set of bit flags that
 		// indicate whether the ObjectType and InheritedObjectType fields contain valid data.
 		// This parameter can be one or more of the following values.
@@ -355,7 +357,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -376,11 +378,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 	case ACE_TYPE_SYSTEM_RESOURCE_ATTRIBUTE:
 		// Parsing ACE of type SYSTEM_RESOURCE_ATTRIBUTE_ACE_TYPE
@@ -389,11 +391,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -406,11 +408,11 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// Mask (4 bytes): An ACCESS_MASK that specifies the user rights allowed by this ACE.
 		ace.Mask.Parse(rawBytes)
 		rawBytes = rawBytes[ace.Mask.RawBytesSize:]
-		ace.RawBytesSize += ace.Mask.RawBytesSize
+		// ace.RawBytesSize += ace.Mask.RawBytesSize
 
 		// Sid (variable): The SID of a trustee. The length of the SID MUST be a multiple of 4.
 		ace.SID.Parse(rawBytes)
-		ace.RawBytesSize += ace.SID.SID.RawBytesSize
+		// ace.RawBytesSize += ace.SID.SID.RawBytesSize
 
 		// ApplicationData (variable): Optional application data. The size of the application
 		// data is determined by the AceSize field of the ACE_HEADER.
@@ -419,9 +421,6 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 	default:
 		//
 	}
-
-	// Crop to content
-	ace.RawBytes = ace.RawBytes[:ace.RawBytesSize]
 }
 
 // ToBytes serializes the AccessControlEntry struct into a byte slice.
@@ -444,11 +443,7 @@ func (ace *AccessControlEntry) ToBytes() []byte {
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_SYSTEM_ALARM:
-		serializedData = append(serializedData, ace.Mask.ToBytes()...)
-		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_ACCESS_ALLOWED_COMPOUND:
-		serializedData = append(serializedData, ace.Mask.ToBytes()...)
-		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_ACCESS_ALLOWED_OBJECT:
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.AccessControlObjectType.ToBytes()...)
@@ -462,8 +457,6 @@ func (ace *AccessControlEntry) ToBytes() []byte {
 		serializedData = append(serializedData, ace.AccessControlObjectType.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_SYSTEM_ALARM_OBJECT:
-		serializedData = append(serializedData, ace.Mask.ToBytes()...)
-		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_ACCESS_ALLOWED_CALLBACK:
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)
@@ -482,16 +475,11 @@ func (ace *AccessControlEntry) ToBytes() []byte {
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_SYSTEM_ALARM_CALLBACK:
-		serializedData = append(serializedData, ace.Mask.ToBytes()...)
-		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_SYSTEM_AUDIT_CALLBACK_OBJECT:
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.AccessControlObjectType.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_SYSTEM_ALARM_CALLBACK_OBJECT:
-		serializedData = append(serializedData, ace.Mask.ToBytes()...)
-		serializedData = append(serializedData, ace.AccessControlObjectType.ToBytes()...)
-		serializedData = append(serializedData, ace.SID.ToBytes()...)
 	case ACE_TYPE_SYSTEM_MANDATORY_LABEL:
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)

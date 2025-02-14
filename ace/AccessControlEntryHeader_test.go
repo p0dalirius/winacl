@@ -7,7 +7,7 @@ import (
 )
 
 func TestAccessControlEntryHeader_Involution(t *testing.T) {
-	hexData := "0100149ccc000000e800000014000000a0000000"
+	hexData := "1122abcd"
 	header := &AccessControlEntryHeader{}
 	rawBytes, err := hex.DecodeString(hexData)
 	if err != nil {

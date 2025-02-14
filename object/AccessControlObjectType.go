@@ -24,26 +24,26 @@ type AccessControlObjectType struct {
 //   - flagValue (int): The integer value representing the access control
 //     entry type. This value is typically defined by the Windows security
 //     model and indicates the type of access control entry.
-func (aco *AccessControlObjectType) Parse(RawBytes []byte) {
+func (aco *AccessControlObjectType) Parse(rawBytes []byte) {
 	aco.RawBytesSize = 0
 
-	aco.Flags.Parse(RawBytes[0:4])
-	RawBytes = RawBytes[4:]
+	aco.Flags.Parse(rawBytes[0:4])
+	rawBytes = rawBytes[4:]
 	aco.RawBytesSize += 4
 
 	if aco.Flags.Value != ACCESS_CONTROL_OBJECT_TYPE_FLAG_NONE {
 		// Parse OBJECT_TYPE
 		if (aco.Flags.Value & ACCESS_CONTROL_OBJECT_TYPE_FLAG_OBJECT_TYPE_PRESENT) == ACCESS_CONTROL_OBJECT_TYPE_FLAG_OBJECT_TYPE_PRESENT {
-			aco.ObjectType.Parse(RawBytes)
+			aco.ObjectType.Parse(rawBytes)
 			aco.RawBytesSize += aco.ObjectType.RawBytesSize
-			RawBytes = RawBytes[aco.ObjectType.RawBytesSize:]
+			rawBytes = rawBytes[aco.ObjectType.RawBytesSize:]
 		}
 
 		// Parse INHERITED_OBJECT_TYPE
 		if (aco.Flags.Value & ACCESS_CONTROL_OBJECT_TYPE_FLAG_INHERITED_OBJECT_TYPE_PRESENT) == ACCESS_CONTROL_OBJECT_TYPE_FLAG_INHERITED_OBJECT_TYPE_PRESENT {
-			aco.InheritedObjectType.Parse(RawBytes)
+			aco.InheritedObjectType.Parse(rawBytes)
 			aco.RawBytesSize += aco.InheritedObjectType.RawBytesSize
-			// RawBytes = RawBytes[aco.InheritedObjectType.RawBytesSize:]
+			// rawBytes = rawBytes[aco.InheritedObjectType.RawBytesSize:]
 		}
 	}
 }
@@ -56,6 +56,14 @@ func (aco *AccessControlObjectType) ToBytes() []byte {
 	var serializedData []byte
 
 	serializedData = append(serializedData, aco.Flags.ToBytes()...)
+
+	if (aco.Flags.Value & ACCESS_CONTROL_OBJECT_TYPE_FLAG_OBJECT_TYPE_PRESENT) == ACCESS_CONTROL_OBJECT_TYPE_FLAG_OBJECT_TYPE_PRESENT {
+		serializedData = append(serializedData, aco.ObjectType.GUID.ToBytes()...)
+	}
+
+	if (aco.Flags.Value & ACCESS_CONTROL_OBJECT_TYPE_FLAG_INHERITED_OBJECT_TYPE_PRESENT) == ACCESS_CONTROL_OBJECT_TYPE_FLAG_INHERITED_OBJECT_TYPE_PRESENT {
+		serializedData = append(serializedData, aco.InheritedObjectType.GUID.ToBytes()...)
+	}
 
 	return serializedData
 }

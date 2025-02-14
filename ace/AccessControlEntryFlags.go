@@ -55,8 +55,8 @@ var AccessControlEntryFlagToName = map[uint8]string{
 //     entry flag. This value is typically defined by the Windows security
 //     model and determines the permissions or behavior associated with the
 //     flag.
-func (aceflag *AccessControlEntryFlag) Parse(rawValue uint8) {
-	aceflag.RawValue = rawValue
+func (aceflag *AccessControlEntryFlag) Parse(rawValue []byte) {
+	aceflag.RawValue = uint8(rawValue[0])
 	aceflag.Values = []uint8{}
 	aceflag.Flags = []string{}
 
