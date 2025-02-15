@@ -53,9 +53,13 @@ func (daclheader *DiscretionaryAccessControlListHeader) ToBytes() []byte {
 
 	serializedData = append(serializedData, daclheader.Revision.ToBytes()...)
 	serializedData = append(serializedData, daclheader.Sbz1)
-	binary.LittleEndian.PutUint16(serializedData, daclheader.AclSize)
-	binary.LittleEndian.PutUint16(serializedData, daclheader.AceCount)
-	binary.LittleEndian.PutUint16(serializedData, daclheader.Sbz2)
+	buffer := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buffer, daclheader.AclSize)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint16(buffer, daclheader.AceCount)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint16(buffer, daclheader.Sbz2)
+	serializedData = append(serializedData, buffer...)
 
 	return serializedData
 }

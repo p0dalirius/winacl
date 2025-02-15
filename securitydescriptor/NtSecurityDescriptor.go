@@ -1,6 +1,7 @@
 package securitydescriptor
 
 import (
+	"encoding/hex"
 	"fmt"
 	"slices"
 	"strings"
@@ -32,36 +33,51 @@ type NtSecurityDescriptor struct {
 // Returns:
 //   - error: An error if parsing fails, otherwise nil.
 func (ntsd *NtSecurityDescriptor) Parse(rawBytes []byte) error {
+	debug := false
+
 	ntsd.RawBytes = rawBytes
 	ntsd.RawBytesSize = 0
 
 	// Parse the header
+	if debug {
+		fmt.Printf("[debug][NtSecurityDescriptor.Parse()] rawBytes: %s\n", hex.EncodeToString(ntsd.RawBytes))
+	}
 	ntsd.Header.Parse(ntsd.RawBytes)
 	ntsd.RawBytesSize += ntsd.Header.RawBytesSize
 
 	// Parse Owner if present
 	if ntsd.Header.OffsetOwner != 0 {
-		ntsd.Owner.Parse(rawBytes[ntsd.Header.OffsetOwner:])
+		if debug {
+			fmt.Printf("[debug][NtSecurityDescriptor.Parse()] rawBytes[ntsd.Header.OffsetOwner:]: %s\n", hex.EncodeToString(ntsd.RawBytes[ntsd.Header.OffsetOwner:]))
+		}
+		ntsd.Owner.Parse(ntsd.RawBytes[ntsd.Header.OffsetOwner:])
 		ntsd.RawBytesSize += ntsd.Owner.SID.RawBytesSize
 	}
 
 	// Parse Group if present
 	if ntsd.Header.OffsetGroup != 0 {
-		ntsd.Group.Parse(rawBytes[ntsd.Header.OffsetGroup:])
+		if debug {
+			fmt.Printf("[debug][NtSecurityDescriptor.Parse()] rawBytes[ntsd.Header.OffsetGroup:]: %s\n", hex.EncodeToString(ntsd.RawBytes[ntsd.Header.OffsetGroup:]))
+		}
+		ntsd.Group.Parse(ntsd.RawBytes[ntsd.Header.OffsetGroup:])
 		ntsd.RawBytesSize += ntsd.Group.SID.RawBytesSize
 	}
 
 	// Parse DACL if present
 	if ntsd.Header.OffsetDacl != 0 {
-		daclBytes := ntsd.RawBytes[ntsd.Header.OffsetDacl:]
-		ntsd.DACL.Parse(daclBytes)
+		if debug {
+			fmt.Printf("[debug][NtSecurityDescriptor.Parse()] rawBytes[ntsd.Header.OffsetDacl:]: %s\n", hex.EncodeToString(ntsd.RawBytes[ntsd.Header.OffsetDacl:]))
+		}
+		ntsd.DACL.Parse(ntsd.RawBytes[ntsd.Header.OffsetDacl:])
 		ntsd.RawBytesSize += ntsd.DACL.RawBytesSize
 	}
 
 	// Parse SACL if present
 	if ntsd.Header.OffsetSacl != 0 {
-		saclBytes := ntsd.RawBytes[ntsd.Header.OffsetSacl:]
-		ntsd.SACL.Parse(saclBytes)
+		if debug {
+			fmt.Printf("[debug][NtSecurityDescriptor.Parse()] rawBytes[ntsd.Header.OffsetSacl:]: %s\n", hex.EncodeToString(ntsd.RawBytes[ntsd.Header.OffsetSacl:]))
+		}
+		ntsd.SACL.Parse(ntsd.RawBytes[ntsd.Header.OffsetSacl:])
 		ntsd.RawBytesSize += ntsd.SACL.RawBytesSize
 	}
 
@@ -75,11 +91,11 @@ func (ntsd *NtSecurityDescriptor) ToBytes() []byte {
 	dataSacl := ntsd.SACL.ToBytes()
 	offsetSacl := 20 // (0x00000014)
 	dataDacl := ntsd.DACL.ToBytes()
-	offsetDacl := 20 + len(dataSacl)
+	offsetDacl := offsetSacl + len(dataSacl)
 	dataOwner := ntsd.Owner.SID.ToBytes()
-	offsetOwner := 20 + len(dataSacl) + len(dataDacl)
+	offsetOwner := offsetSacl + len(dataSacl) + len(dataDacl)
 	dataGroup := ntsd.Group.SID.ToBytes()
-	offsetGroup := 20 + len(dataSacl) + len(dataDacl) + len(dataOwner)
+	offsetGroup := offsetSacl + len(dataSacl) + len(dataDacl) + len(dataOwner)
 
 	// Update the header and append the header bytes
 	ntsd.Header.OffsetOwner = uint32(offsetOwner)

@@ -2,6 +2,7 @@ package identity
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -246,6 +247,67 @@ func (sid *SID) LookupName() string {
 	return ""
 }
 
+// FromBytes populates the SID struct fields from the provided byte slice,
+// interpreting the byte data as a binary representation of a Security Identifier (SID).
+//
+// Parameters:
+//   - RawBytes ([]byte): A byte slice containing the binary representation of the SID.
+//     The slice must be at least of sufficient length to contain all SID components.
+func (sid *SID) FromBytes(rawBytes []byte) {
+	debug := false
+
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] rawBytes: %s\n", hex.EncodeToString(rawBytes))
+	}
+
+	sid.RawBytesSize = 0
+
+	sid.RevisionLevel = uint8(rawBytes[0])
+	sid.RawBytesSize += 1
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed RevisionLevel: %02x (%d)\n", sid.RevisionLevel, sid.RevisionLevel)
+	}
+
+	sid.SubAuthorityCount = uint8(rawBytes[1])
+	sid.RawBytesSize += 1
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed SubAuthorityCount: %02x (%d)\n", sid.SubAuthorityCount, sid.SubAuthorityCount)
+	}
+
+	sid.IdentifierAuthority = 0
+	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[2:4])) >> 16
+	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[4:6])) >> 8
+	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[6:8]))
+	sid.RawBytesSize += 6
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed IdentifierAuthority: %016x (%d)\n", sid.IdentifierAuthority, sid.IdentifierAuthority)
+	}
+
+	sid.SubAuthorities = make([]uint32, sid.SubAuthorityCount-1)
+	for i := 0; i < int(sid.SubAuthorityCount-1); i++ {
+		sid.SubAuthorities[i] = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
+		sid.RawBytesSize += 4
+		if debug {
+			fmt.Printf("[debug][SecurityIdentifier.FromBytes()] | Parsed SubAuthority %d: %08x (%d)\n", i, sid.SubAuthorities[i], sid.SubAuthorities[i])
+		}
+	}
+
+	if sid.RawBytesSize <= uint32(len(rawBytes)) {
+		// Here we pad the relative identifier bytes to match the expected length of 4 bytes
+		buffer := rawBytes[sid.RawBytesSize:]
+		if len(buffer) < 4 {
+			buffer = append(buffer, make([]byte, 4-len(buffer))...)
+		}
+		sid.RelativeIdentifier = binary.LittleEndian.Uint32(buffer)
+	} else {
+		sid.RelativeIdentifier = 0
+	}
+
+	sid.RawBytesSize += 4
+
+	sid.RawBytes = rawBytes[:sid.RawBytesSize]
+}
+
 // ToBytes converts the current SID struct into its binary representation as a byte slice,
 // suitable for storage or transmission.
 //
@@ -270,9 +332,9 @@ func (sid *SID) ToBytes() []byte {
 
 	// Add each sub-authority (4 bytes each, little-endian)
 	for _, subAuthority := range sid.SubAuthorities {
-		subAuthBytes := make([]byte, 4)
-		binary.LittleEndian.PutUint32(subAuthBytes, subAuthority)
-		buffer = append(buffer, subAuthBytes...)
+		subAuthorityBytes := make([]byte, 4)
+		binary.LittleEndian.PutUint32(subAuthorityBytes, subAuthority)
+		buffer = append(buffer, subAuthorityBytes...)
 	}
 
 	// Add the Relative Identifier (4 bytes, little-endian)
@@ -281,39 +343,6 @@ func (sid *SID) ToBytes() []byte {
 	buffer = append(buffer, relativeIdentifierBytes...)
 
 	return buffer
-}
-
-// FromBytes populates the SID struct fields from the provided byte slice,
-// interpreting the byte data as a binary representation of a Security Identifier (SID).
-//
-// Parameters:
-//   - RawBytes ([]byte): A byte slice containing the binary representation of the SID.
-//     The slice must be at least of sufficient length to contain all SID components.
-func (sid *SID) FromBytes(rawBytes []byte) {
-	sid.RawBytesSize = 0
-
-	sid.RevisionLevel = uint8(rawBytes[0])
-	sid.RawBytesSize += 1
-
-	sid.SubAuthorityCount = uint8(rawBytes[1])
-	sid.RawBytesSize += 1
-
-	sid.IdentifierAuthority = 0
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[2:4])) >> 16
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[4:6])) >> 8
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[6:8]))
-	sid.RawBytesSize += 6
-
-	sid.SubAuthorities = make([]uint32, sid.SubAuthorityCount-1)
-	for i := 0; i < int(sid.SubAuthorityCount-1); i++ {
-		sid.SubAuthorities[i] = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
-		sid.RawBytesSize += 4
-	}
-
-	sid.RelativeIdentifier = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
-	sid.RawBytesSize += 4
-
-	sid.RawBytes = rawBytes[:sid.RawBytesSize]
 }
 
 // FromString populates the SID struct fields from a provided SID string representation.

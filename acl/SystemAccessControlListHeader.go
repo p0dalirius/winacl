@@ -56,10 +56,18 @@ func (saclheader *SystemAccessControlListHeader) ToBytes() []byte {
 	var serializedData []byte
 
 	serializedData = append(serializedData, saclheader.Revision.ToBytes()...)
+
 	serializedData = append(serializedData, saclheader.Sbz1)
-	binary.LittleEndian.PutUint16(serializedData, saclheader.AclSize)
-	binary.LittleEndian.PutUint16(serializedData, saclheader.AceCount)
-	binary.LittleEndian.PutUint16(serializedData, saclheader.Sbz2)
+
+	buffer := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buffer, saclheader.AclSize)
+	serializedData = append(serializedData, buffer...)
+
+	binary.LittleEndian.PutUint16(buffer, saclheader.AceCount)
+	serializedData = append(serializedData, buffer...)
+
+	binary.LittleEndian.PutUint16(buffer, saclheader.Sbz2)
+	serializedData = append(serializedData, buffer...)
 
 	return serializedData
 }

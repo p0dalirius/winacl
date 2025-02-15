@@ -3,21 +3,48 @@ package identity
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
 )
 
 func TestSID_Involution(t *testing.T) {
-	hexData := "01020000000000052000000020020000"
-	sid := &SID{}
-	rawBytes, err := hex.DecodeString(hexData)
-	if err != nil {
-		t.Errorf("Failed to decode hexData: %v", err)
+	testSIDsinHexFormat := []string{
+		"01050000000000051500000028bb82279261b9fe2474aa5d00020000",
+		"01050000000000051500000028bb82279261b9fe2030303000000000",
+		"01050000000000051500000028bb82279261b9fe2030303000000000",
+		// "01050000000000051500000028bb82279261b9fe20", // Seems broken
+		"01020000000000052000000020020000",
 	}
-	sid.FromBytes(rawBytes)
-	data := sid.ToBytes()
-	if !bytes.Equal(data, rawBytes) {
-		t.Errorf("SID.ToBytes() failed: Output of sid.ToBytes() is not equal to input rawBytes")
+	for _, hexData := range testSIDsinHexFormat {
+		rawBytes, err := hex.DecodeString(hexData)
+		if err != nil {
+			t.Fatalf("Failed to decode hex string: %v", err)
+		}
+
+		var sid SID
+		sid.FromBytes(rawBytes)
+
+		serializedBytes := sid.ToBytes()
+
+		if !bytes.Equal(rawBytes, serializedBytes) {
+			hexData2 := hex.EncodeToString(serializedBytes)
+			minLen := len(hexData2)
+			if len(hexData) < minLen {
+				minLen = len(hexData)
+			}
+			for k := 0; k < minLen; k++ {
+				if hexData[k] == hexData2[k] {
+					hexData = hexData[:k] + "_" + hexData[k+1:]
+					hexData2 = hexData2[:k] + "_" + hexData2[k+1:]
+				}
+			}
+
+			fmt.Println("source-----:", hexData)
+			fmt.Println("serialized-:", hexData2)
+
+			t.Errorf("Involution test failed: expected %s, got %s", hex.EncodeToString(rawBytes), hex.EncodeToString(serializedBytes))
+		}
 	}
 }
 

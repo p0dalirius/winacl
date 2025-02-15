@@ -1,6 +1,7 @@
 package acl
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -22,17 +23,23 @@ type SystemAccessControlList struct {
 // Parameters:
 //   - rawBytes ([]byte): The raw byte slice to be parsed.
 func (sacl *SystemAccessControlList) Parse(rawBytes []byte) {
-	sacl.Header.Parse(rawBytes)
+	debug := false
 
 	sacl.RawBytesSize = 0
 	sacl.RawBytes = rawBytes
 
+	if debug {
+		fmt.Printf("[debug][SystemAccessControlList.Parse()] rawBytes: %s\n", hex.EncodeToString(rawBytes))
+	}
 	sacl.Header.Parse(rawBytes)
 	sacl.RawBytesSize += sacl.Header.RawBytesSize
 	rawBytes = rawBytes[sacl.RawBytesSize:]
 
 	// Parse all ACEs
 	for index := 0; index < int(sacl.Header.AceCount); index++ {
+		if debug {
+			fmt.Printf("[debug][SystemAccessControlList.Parse()] Parsing ACE %d/%d: %s\n", index+1, int(sacl.Header.AceCount), hex.EncodeToString(rawBytes))
+		}
 		entry := ace.AccessControlEntry{}
 		entry.Parse(rawBytes)
 		entry.Index = uint16(index + 1)

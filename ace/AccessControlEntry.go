@@ -29,6 +29,7 @@ type AccessControlEntry struct {
 //   - rawBytes ([]byte): The raw byte slice to be parsed.
 func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 	debug := false
+
 	ace.RawBytesSize = 0
 	// Parse Header
 	ace.Header.Parse(rawBytes)
