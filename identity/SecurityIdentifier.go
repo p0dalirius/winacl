@@ -8,37 +8,6 @@ import (
 	"strings"
 )
 
-// Represents a Security Identifier (SID) in various formats and provides methods for manipulation and conversion between them.
-//
-// Attributes:
-//
-//	revisionLevel (int): The revision level of the SID.
-//	subAuthorityCount (int): The number of sub-authorities in the SID.
-//	identifierAuthority (SID_IDENTIFIER_AUTHORITY): The identifier authority value.
-//	reserved (bytes): Reserved bytes, should always be empty.
-//	subAuthorities (list): A list of sub-authorities.
-//	relativeIdentifier (int): The relative identifier.
-//
-// Methods:
-//
-//		Parse(RawBytes []byte): Parses the raw bytes to populate the SID fields.
-//		ToString() string: Converts the SID to its string representation.
-//	 Describe(): prints a detailed description of the SID with the specified indentation level.
-//
-// See: https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers
-// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/f992ad60-0fe4-4b87-9fed-beb478836861
-type SID struct {
-	RevisionLevel       uint8
-	SubAuthorityCount   uint8
-	IdentifierAuthority uint64
-	SubAuthorities      []uint32
-	RelativeIdentifier  uint32
-	Reserved            []byte
-	// Internal
-	RawBytes     []byte
-	RawBytesSize uint32
-}
-
 const (
 	WELLKNOWNSID_NOBODY               = "S-1-0-0"
 	WELLKNOWNSID_EVERYONE             = "S-1-1-0"
@@ -222,6 +191,37 @@ var WellKnownSIDs = map[string]string{
 	WELLKNOWNSID_DOMAIN_RAS_SERVERS_GROUP:            "RAS Servers Group",
 }
 
+// Represents a Security Identifier (SID) in various formats and provides methods for manipulation and conversion between them.
+//
+// Attributes:
+//
+//	revisionLevel (int): The revision level of the SID.
+//	subAuthorityCount (int): The number of sub-authorities in the SID.
+//	identifierAuthority (SID_IDENTIFIER_AUTHORITY): The identifier authority value.
+//	reserved (bytes): Reserved bytes, should always be empty.
+//	subAuthorities (list): A list of sub-authorities.
+//	relativeIdentifier (int): The relative identifier.
+//
+// Methods:
+//
+//		Parse(RawBytes []byte): Parses the raw bytes to populate the SID fields.
+//		ToString() string: Converts the SID to its string representation.
+//	 Describe(): prints a detailed description of the SID with the specified indentation level.
+//
+// See: https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers
+// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/f992ad60-0fe4-4b87-9fed-beb478836861
+type SID struct {
+	RevisionLevel       uint8
+	SubAuthorityCount   uint8
+	IdentifierAuthority SecurityIdentifierAuthority
+	SubAuthorities      []uint32
+	RelativeIdentifier  uint32
+	Reserved            []byte
+	// Internal
+	RawBytes     []byte
+	RawBytesSize uint32
+}
+
 // IsWellKnownSID checks if the current SID instance matches any well-known SIDs,
 // such as those that represent common Windows accounts (e.g., "Everyone", "Local System").
 //
@@ -255,55 +255,85 @@ func (sid *SID) LookupName() string {
 //     The slice must be at least of sufficient length to contain all SID components.
 func (sid *SID) FromBytes(rawBytes []byte) {
 	debug := false
-
 	if debug {
 		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] rawBytes: %s\n", hex.EncodeToString(rawBytes))
 	}
 
+	sid.RevisionLevel = 0
+	sid.SubAuthorityCount = 0
+	sid.IdentifierAuthority = SecurityIdentifierAuthority{Value: 0}
+	sid.SubAuthorities = make([]uint32, 0)
+	sid.RelativeIdentifier = 0
+	sid.Reserved = make([]byte, 0)
 	sid.RawBytesSize = 0
 
-	sid.RevisionLevel = uint8(rawBytes[0])
-	sid.RawBytesSize += 1
-	if debug {
-		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed RevisionLevel: %02x (%d)\n", sid.RevisionLevel, sid.RevisionLevel)
-	}
-
-	sid.SubAuthorityCount = uint8(rawBytes[1])
-	sid.RawBytesSize += 1
-	if debug {
-		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed SubAuthorityCount: %02x (%d)\n", sid.SubAuthorityCount, sid.SubAuthorityCount)
-	}
-
-	sid.IdentifierAuthority = 0
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[2:4])) >> 16
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[4:6])) >> 8
-	sid.IdentifierAuthority += uint64(binary.BigEndian.Uint16(rawBytes[6:8]))
-	sid.RawBytesSize += 6
-	if debug {
-		fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed IdentifierAuthority: %016x (%d)\n", sid.IdentifierAuthority, sid.IdentifierAuthority)
-	}
-
-	sid.SubAuthorities = make([]uint32, sid.SubAuthorityCount-1)
-	for i := 0; i < int(sid.SubAuthorityCount-1); i++ {
-		sid.SubAuthorities[i] = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
-		sid.RawBytesSize += 4
+	// Parse the RevisionLevel
+	if len(rawBytes) > int(sid.RawBytesSize)+1 {
+		sid.RevisionLevel = uint8(rawBytes[0])
+		sid.RawBytesSize += 1
 		if debug {
-			fmt.Printf("[debug][SecurityIdentifier.FromBytes()] | Parsed SubAuthority %d: %08x (%d)\n", i, sid.SubAuthorities[i], sid.SubAuthorities[i])
+			fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed RevisionLevel: %02x (%d)\n", sid.RevisionLevel, sid.RevisionLevel)
+		}
+	} else {
+		return
+	}
+
+	// Parse the SubAuthorityCount
+	if len(rawBytes) > int(sid.RawBytesSize)+1 {
+		sid.SubAuthorityCount = uint8(rawBytes[1])
+		sid.RawBytesSize += 1
+		if debug {
+			fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed SubAuthorityCount: %02x (%d)\n", sid.SubAuthorityCount, sid.SubAuthorityCount)
+		}
+	} else {
+		return
+	}
+
+	// Parse the IdentifierAuthority
+	if len(rawBytes) >= int(sid.RawBytesSize)+6 {
+		sid.IdentifierAuthority.FromBytes(rawBytes[2:8])
+		sid.RawBytesSize += 6
+		if debug {
+			fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed IdentifierAuthority: %016x (%d)\n", sid.IdentifierAuthority, sid.IdentifierAuthority)
+		}
+	} else {
+		return
+	}
+
+	// Initialize the sub-authorities
+	if sid.SubAuthorityCount > 0 {
+		sid.SubAuthorities = make([]uint32, sid.SubAuthorityCount-1)
+		for i := 0; i < int(sid.SubAuthorityCount-1); i++ {
+			sid.SubAuthorities[i] = 0
+		}
+
+		// Parse the real sub-authorities
+		for i := 0; i < int(sid.SubAuthorityCount-1); i++ {
+			if len(rawBytes) >= int(sid.RawBytesSize)+4 {
+				sid.SubAuthorities[i] = binary.LittleEndian.Uint32(rawBytes[sid.RawBytesSize : sid.RawBytesSize+4])
+				sid.RawBytesSize += 4
+				if debug {
+					fmt.Printf("[debug][SecurityIdentifier.FromBytes()] | Parsed SubAuthority %d: %08x (%d)\n", i, sid.SubAuthorities[i], sid.SubAuthorities[i])
+				}
+			} else {
+				return
+			}
 		}
 	}
 
-	if sid.RawBytesSize <= uint32(len(rawBytes)) {
+	if len(rawBytes) > int(sid.RawBytesSize) {
 		// Here we pad the relative identifier bytes to match the expected length of 4 bytes
 		buffer := rawBytes[sid.RawBytesSize:]
 		if len(buffer) < 4 {
 			buffer = append(buffer, make([]byte, 4-len(buffer))...)
 		}
 		sid.RelativeIdentifier = binary.LittleEndian.Uint32(buffer)
+		if debug {
+			fmt.Printf("[debug][SecurityIdentifier.FromBytes()] Parsed RelativeIdentifier: %08x (%d)\n", sid.RelativeIdentifier, sid.RelativeIdentifier)
+		}
 	} else {
-		sid.RelativeIdentifier = 0
+		return
 	}
-
-	sid.RawBytesSize += 4
 
 	sid.RawBytes = rawBytes[:sid.RawBytesSize]
 }
@@ -314,33 +344,60 @@ func (sid *SID) FromBytes(rawBytes []byte) {
 // Returns:
 //   - []byte: A byte slice representing the SID in binary format, constructed from its fields.
 func (sid *SID) ToBytes() []byte {
+	debug := false
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.ToBytes()] sid.ToString(): %s\n", sid.ToString())
+	}
+
 	// Create a byte slice to hold the result
 	buffer := make([]byte, 0)
 
 	// Add the RevisionLevel
 	buffer = append(buffer, sid.RevisionLevel)
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.ToBytes()] Added RevisionLevel, buffer: %s\n", hex.EncodeToString(buffer))
+	}
 
 	// Add the SubAuthorityCount
 	buffer = append(buffer, sid.SubAuthorityCount)
-
-	// Convert and add the IdentifierAuthority (6 bytes, big-endian)
-	identifierBytes := make([]byte, 6)
-	binary.BigEndian.PutUint16(identifierBytes[0:2], uint16(sid.IdentifierAuthority>>32))
-	binary.BigEndian.PutUint16(identifierBytes[2:4], uint16(sid.IdentifierAuthority>>16))
-	binary.BigEndian.PutUint16(identifierBytes[4:6], uint16(sid.IdentifierAuthority))
-	buffer = append(buffer, identifierBytes...)
-
-	// Add each sub-authority (4 bytes each, little-endian)
-	for _, subAuthority := range sid.SubAuthorities {
-		subAuthorityBytes := make([]byte, 4)
-		binary.LittleEndian.PutUint32(subAuthorityBytes, subAuthority)
-		buffer = append(buffer, subAuthorityBytes...)
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.ToBytes()] Added SubAuthorityCount, buffer: %s\n", hex.EncodeToString(buffer))
 	}
 
-	// Add the Relative Identifier (4 bytes, little-endian)
-	relativeIdentifierBytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(relativeIdentifierBytes, sid.RelativeIdentifier)
-	buffer = append(buffer, relativeIdentifierBytes...)
+	// Convert and add the IdentifierAuthority (6 bytes, big-endian)
+	identifierBytes := sid.IdentifierAuthority.ToBytes()
+	buffer = append(buffer, identifierBytes...)
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.ToBytes()] Added IdentifierAuthority, buffer: %s\n", hex.EncodeToString(buffer))
+	}
+
+	// Add each sub-authority (4 bytes each, little-endian) up to the point where all remaining sub-authorities are 0
+	lastNullSubAuthorityIndex := len(sid.SubAuthorities)
+	for k := range len(sid.SubAuthorities) {
+		if sid.SubAuthorities[len(sid.SubAuthorities)-k-1] == 0 {
+			lastNullSubAuthorityIndex = len(sid.SubAuthorities) - k - 1
+		}
+	}
+
+	// Add each sub-authority (4 bytes each, little-endian)
+	for k := range lastNullSubAuthorityIndex {
+		subAuthorityBytes := make([]byte, 4)
+		binary.LittleEndian.PutUint32(subAuthorityBytes, sid.SubAuthorities[k])
+		buffer = append(buffer, subAuthorityBytes...)
+		if debug {
+			fmt.Printf("[debug][SecurityIdentifier.ToBytes()] Added SubAuthority %d, buffer: %s\n", k, hex.EncodeToString(buffer))
+		}
+	}
+
+	if sid.RelativeIdentifier != 0 {
+		// Add the Relative Identifier (4 bytes, little-endian)
+		relativeIdentifierBytes := make([]byte, 4)
+		binary.LittleEndian.PutUint32(relativeIdentifierBytes, sid.RelativeIdentifier)
+		buffer = append(buffer, relativeIdentifierBytes...)
+		if debug {
+			fmt.Printf("[debug][SecurityIdentifier.ToBytes()] Added RelativeIdentifier, buffer: %s\n", hex.EncodeToString(buffer))
+		}
+	}
 
 	return buffer
 }
@@ -355,8 +412,26 @@ func (sid *SID) ToBytes() []byte {
 //   - error: Returns an error if the SID string format is invalid or if any part of the string
 //     cannot be parsed correctly. Returns nil if the parsing is successful.
 func (sid *SID) FromString(sidString string) error {
+	debug := false
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromString()] sidString: %s\n", sidString)
+	}
+
+	// Init all the fields
+	sid.RevisionLevel = 0
+	sid.SubAuthorityCount = 0
+	sid.IdentifierAuthority = SecurityIdentifierAuthority{Value: 0}
+	sid.SubAuthorities = make([]uint32, 0)
+	sid.RelativeIdentifier = 0
+	sid.Reserved = make([]byte, 0)
+	sid.RawBytesSize = 0
+
 	// Split the SID string into parts using "-" as the delimiter
 	parts := strings.Split(sidString, "-")
+
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromString()] parts: %v\n", parts)
+	}
 
 	// Ensure the SID string starts with "S" and has at least 4 parts: "S", revision, identifier authority, sub-authorities/RID
 	if len(parts) < 4 || parts[0] != "S" {
@@ -369,29 +444,48 @@ func (sid *SID) FromString(sidString string) error {
 		return fmt.Errorf("invalid revision level in SID: %v", err)
 	}
 	sid.RevisionLevel = uint8(revision)
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromString()] sid.RevisionLevel: %d\n", sid.RevisionLevel)
+	}
 
 	// Parse the identifier authority (S-<Revision>-<IdentifierAuthority>)
 	identifierAuthority, err := strconv.ParseUint(parts[2], 10, 64)
 	if err != nil {
 		return fmt.Errorf("invalid identifier authority in SID: %v", err)
 	}
-	sid.IdentifierAuthority = identifierAuthority
+	sid.IdentifierAuthority.Value = identifierAuthority
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromString()] sid.IdentifierAuthority: %d\n", sid.IdentifierAuthority.Value)
+	}
 
 	// The rest are sub-authorities including the Relative Identifier (RID)
-	var subAuthorities []uint32
-	for i := 3; i < len(parts); i++ {
-		subAuthority, err := strconv.ParseUint(parts[i], 10, 32)
+	subAuthorities := make([]uint32, 0)
+	for i := 0; i < len(parts[3:]); i++ {
+		subAuthority, err := strconv.ParseUint(parts[3+i], 10, 32)
 		if err != nil {
 			return fmt.Errorf("invalid sub-authority in SID: %v", err)
 		}
 		subAuthorities = append(subAuthorities, uint32(subAuthority))
 	}
+	if debug {
+		fmt.Printf("[debug][SecurityIdentifier.FromString()] subAuthorities: %v\n", subAuthorities)
+	}
 
+	sid.RelativeIdentifier = 0
+	sid.SubAuthorityCount = uint8(0)
+	sid.SubAuthorities = make([]uint32, 0)
 	// Determine SubAuthorityCount and set SubAuthorities/RID
-	sid.SubAuthorityCount = uint8(len(subAuthorities))
-	if sid.SubAuthorityCount > 0 {
-		sid.SubAuthorities = subAuthorities[:sid.SubAuthorityCount-1]
-		sid.RelativeIdentifier = subAuthorities[sid.SubAuthorityCount-1]
+	if len(subAuthorities) != 0 {
+		if len(subAuthorities) == 1 {
+			// The last sub-authority is the Relative Identifier (RID)
+			sid.RelativeIdentifier = subAuthorities[len(subAuthorities)-1]
+		} else {
+			// The last sub-authority is the Relative Identifier (RID)
+			sid.RelativeIdentifier = subAuthorities[len(subAuthorities)-1]
+			// The rest are the sub-authorities
+			sid.SubAuthorities = subAuthorities[:len(subAuthorities)-1]
+			sid.SubAuthorityCount = uint8(len(subAuthorities))
+		}
 	}
 
 	return nil
@@ -405,11 +499,14 @@ func (sid *SID) FromString(sidString string) error {
 //     This includes the revision level, identifier authority, all sub-authorities, and the
 //     relative identifier (RID).
 func (sid *SID) ToString() string {
-	sidstring := fmt.Sprintf("S-%d-%d", sid.RevisionLevel, sid.IdentifierAuthority)
-	for _, subauthority := range sid.SubAuthorities {
-		sidstring += fmt.Sprintf("-%d", subauthority)
+	sidstring := fmt.Sprintf("S-%d-%d", sid.RevisionLevel, sid.IdentifierAuthority.Value)
+
+	for k := range sid.SubAuthorities {
+		sidstring += fmt.Sprintf("-%d", sid.SubAuthorities[k])
 	}
+
 	sidstring += fmt.Sprintf("-%d", sid.RelativeIdentifier)
+
 	return sidstring
 }
 
@@ -424,18 +521,19 @@ func (sid *SID) Describe(indent int) {
 
 	fmt.Printf("%s<SID '%s'>\n", indentPrompt, sid.ToString())
 	fmt.Printf("%s │ \x1b[93mRevisionLevel\x1b[0m        : \x1b[96m0x%02x\x1b[0m\n", indentPrompt, sid.RevisionLevel)
-	fmt.Printf("%s │ \x1b[93mIdentifierAuthority\x1b[0m  : \x1b[96m0x%02x\x1b[0m\n", indentPrompt, sid.IdentifierAuthority)
+	fmt.Printf("%s │ \x1b[93mSubAuthorityCount\x1b[0m    : \x1b[96m0x%02x\x1b[0m\n", indentPrompt, sid.SubAuthorityCount)
+	fmt.Printf("%s │ \x1b[93mIdentifierAuthority\x1b[0m  : \x1b[96m0x%012x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, sid.IdentifierAuthority, sid.IdentifierAuthority.String())
 
 	if sid.SubAuthorityCount != 0 {
 		fmt.Printf("%s │ \x1b[93mSubAuthorities (%03d)\x1b[0m :\n", indentPrompt, sid.SubAuthorityCount)
 		for index, subauthority := range sid.SubAuthorities {
-			fmt.Printf("%s │ \x1b[93mSubAuthority %02d\x1b[0m : 0x%08x\n", strings.Repeat(" │ ", indent+1), index, subauthority)
+			fmt.Printf("%s │ \x1b[93mSubAuthority %02d\x1b[0m   : \x1b[96m0x%08x\x1b[0m (\x1b[94m%d\x1b[0m)\n", strings.Repeat(" │ ", indent+1), index, subauthority, subauthority)
 		}
 		fmt.Printf("%s └─\n", strings.Repeat(" │ ", indent+1))
 	} else {
 		fmt.Printf("%s │ \x1b[93mSubAuthorities (0)\x1b[0m   : Empty\n", indentPrompt)
 	}
 
-	fmt.Printf("%s │ \x1b[93mRelativeIdentifier\x1b[0m   : \x1b[96m0x%02x\x1b[0m\n", indentPrompt, sid.RelativeIdentifier)
+	fmt.Printf("%s │ \x1b[93mRelativeIdentifier\x1b[0m   : \x1b[96m0x%08x\x1b[0m (\x1b[94m%d\x1b[0m)\n", indentPrompt, sid.RelativeIdentifier, sid.RelativeIdentifier)
 	fmt.Printf("%s └─\n", indentPrompt)
 }

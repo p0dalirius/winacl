@@ -149,7 +149,7 @@ func (ace *AccessControlEntry) Parse(rawBytes []byte) {
 		// in the Mask field. This field is valid only if the ACE_OBJECT_TYPE_PRESENT bit is set
 		// in the Flags field. Otherwise, the ObjectType field is ignored.
 
-		// InheritedObjectType (16 bytes): A GUID that identifies the type of child object that
+		// InheritedObjectType (16 bytes): A GU075a38002000000003000000be3b0ef3f09fd111b6030000f80367c1a57a96bfe60dd011a28500aa003049e20101000000000001ID that identifies the type of child object that
 		// can inherit the ACE. Inheritance is also controlled by the inheritance flags in the
 		// ACE_HEADER, as well as by any protection against inheritance placed on the child
 		// objects. This field is valid only if the ACE_INHERITED_OBJECT_TYPE_PRESENT bit is set
@@ -490,6 +490,10 @@ func (ace *AccessControlEntry) ToBytes() []byte {
 	case ACE_TYPE_SYSTEM_SCOPED_POLICY_ID:
 		serializedData = append(serializedData, ace.Mask.ToBytes()...)
 		serializedData = append(serializedData, ace.SID.ToBytes()...)
+	}
+
+	for uint32(len(serializedData)) < uint32(ace.Header.Size) {
+		serializedData = append(serializedData, 0)
 	}
 
 	return serializedData
