@@ -27,10 +27,10 @@ type Identity struct {
 //
 // Parameters:
 //   - RawBytes ([]byte): The raw byte data containing the SID information.
-func (identity *Identity) Parse(RawBytes []byte) {
-	identity.RawBytes = RawBytes
+func (identity *Identity) Parse(rawBytes []byte) {
+	identity.RawBytes = rawBytes
 
-	identity.SID.FromBytes(RawBytes)
+	identity.SID.FromBytes(rawBytes)
 
 	sidString := identity.SID.ToString()
 	if name, exists := WellKnownSIDs[sidString]; exists {
@@ -38,6 +38,14 @@ func (identity *Identity) Parse(RawBytes []byte) {
 	}
 
 	identity.RawBytesSize = identity.SID.RawBytesSize
+}
+
+// ToBytes serializes the Identity struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the Identity.
+func (identity *Identity) ToBytes() []byte {
+	return identity.SID.ToBytes()
 }
 
 // Describe prints a detailed description of the Identity struct, including its SID and name,

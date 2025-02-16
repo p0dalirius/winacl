@@ -34,6 +34,12 @@ func (objType *ObjectType) Parse(RawBytes []byte) {
 	objType.GUID.FromRawBytes(RawBytes)
 }
 
+// ToBytes returns the raw byte representation of the ObjectType.
+// It returns the GUID as a byte slice.
+func (objType *ObjectType) ToBytes() []byte {
+	return objType.GUID.ToBytes()
+}
+
 // Describe prints a formatted representation of the ObjectType instance,
 // including its GUID, to the standard output. The output is indented
 // based on the provided indent level for better readability.

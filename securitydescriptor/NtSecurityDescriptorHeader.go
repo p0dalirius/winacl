@@ -56,7 +56,7 @@ func (ntsd *NtSecurityDescriptorHeader) Parse(RawBytes []byte) error {
 	ntsd.Sbz1 = RawBytes[1]
 
 	ntsd.Control = NtSecurityDescriptorControl{}
-	ntsd.Control.FromBytes(binary.LittleEndian.Uint16(RawBytes[2:4]))
+	ntsd.Control.FromBytes(RawBytes[2:4])
 
 	ntsd.OffsetOwner = binary.LittleEndian.Uint32(RawBytes[4:8])
 
@@ -67,6 +67,29 @@ func (ntsd *NtSecurityDescriptorHeader) Parse(RawBytes []byte) error {
 	ntsd.OffsetDacl = binary.LittleEndian.Uint32(RawBytes[16:20])
 
 	return nil
+}
+
+// ToBytes serializes the NtSecurityDescriptorHeader struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the security descriptor header.
+func (ntsdh *NtSecurityDescriptorHeader) ToBytes() []byte {
+	serializedData := []byte{}
+
+	serializedData = append(serializedData, ntsdh.Revision)
+	serializedData = append(serializedData, ntsdh.Sbz1)
+	serializedData = append(serializedData, ntsdh.Control.ToBytes()...)
+	buffer := make([]byte, 4)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetOwner)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetGroup)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetSacl)
+	serializedData = append(serializedData, buffer...)
+	binary.LittleEndian.PutUint32(buffer, ntsdh.OffsetDacl)
+	serializedData = append(serializedData, buffer...)
+
+	return serializedData
 }
 
 // Describe prints a detailed description of the NtSecurityDescriptorHeader struct,

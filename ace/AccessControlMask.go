@@ -24,13 +24,13 @@ type AccessControlMask struct {
 
 // Parse populates the AccessControlMask from raw byte data.
 // It extracts the RawValue and determines the corresponding flags and their names.
-func (acm *AccessControlMask) Parse(RawBytes []byte) {
+func (acm *AccessControlMask) Parse(rawBytes []byte) {
 	// Store the raw bytes and set the size
-	acm.RawBytes = RawBytes
+	acm.RawBytes = rawBytes
 	acm.RawBytesSize = 4
 
 	// Convert raw bytes to a uint32 value using little-endian format
-	acm.RawValue = binary.LittleEndian.Uint32(RawBytes[:acm.RawBytesSize])
+	acm.RawValue = binary.LittleEndian.Uint32(rawBytes[:acm.RawBytesSize])
 
 	// Prepare a list of right names and sort them for consistent ordering
 	listOfRightNames := make([]string, 0, len(rights.RightValueToRightName))
@@ -54,6 +54,26 @@ func (acm *AccessControlMask) Parse(RawBytes []byte) {
 	}
 }
 
+// ToBytes serializes the AccessControlMask struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the AccessControlMask.
+func (acm *AccessControlMask) ToBytes() []byte {
+	serializedData := make([]byte, 4)
+
+	binary.LittleEndian.PutUint32(serializedData, acm.RawValue)
+
+	return serializedData
+}
+
+// String returns a string representation of the AccessControlMask.
+//
+// Returns:
+//   - string: The string representation of the AccessControlMask.
+func (acm *AccessControlMask) String() string {
+	return strings.Join(acm.Flags, "|")
+}
+
 // HasRight checks if a specific right is set within the ACE's Mask.
 //
 // Parameters:
@@ -70,6 +90,6 @@ func (acm *AccessControlMask) HasRight(right uint32) bool {
 func (acm *AccessControlMask) Describe(indent int) {
 	indentPrompt := strings.Repeat(" │ ", indent)
 	fmt.Printf("%s<AccessControlMask>\n", indentPrompt)
-	fmt.Printf("%s │ \x1b[93mMask\x1b[0m : \x1b[96m0x%08x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, acm.RawValue, strings.Join(acm.Flags, "|"))
+	fmt.Printf("%s │ \x1b[93mMask\x1b[0m : \x1b[96m0x%08x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, acm.RawValue, acm.String())
 	fmt.Printf("%s └─\n", indentPrompt)
 }

@@ -44,28 +44,46 @@ type AccessControlEntryHeader struct {
 // represent the size of the ACE.
 //
 // Parameters:
-//   - RawBytes: A byte slice containing the raw data from which to parse the ACE header.
+//   - rawBytes: A byte slice containing the raw data from which to parse the ACE header.
 //     It must be at least 4 bytes long to avoid index out of range errors.
-func (aceheader *AccessControlEntryHeader) Parse(RawBytes []byte) {
+func (aceheader *AccessControlEntryHeader) Parse(rawBytes []byte) {
 	// Ensure that RawBytes has sufficient length
-	if len(RawBytes) < 4 {
+	if len(rawBytes) < 4 {
 		return // or handle the error appropriately (e.g., log, panic, etc.)
 	}
 
 	// Initialize RawBytesSize
 	aceheader.RawBytesSize = 0
+	aceheader.RawBytes = rawBytes
 
 	// Parse the ACE type from the first byte
-	aceheader.Type.Parse(int(RawBytes[0]))
+	aceheader.Type.Parse(rawBytes[:1])
 
 	// Parse the ACE flags from the second byte
-	aceheader.Flags.Parse(uint8(RawBytes[1]))
+	aceheader.Flags.Parse(rawBytes[1:2])
 
 	// Read the size of the ACE from bytes 2 and 3
-	aceheader.Size = binary.LittleEndian.Uint16(RawBytes[2:4])
+	aceheader.Size = binary.LittleEndian.Uint16(rawBytes[2:4])
 
 	// Set the raw bytes size to 4 since we've read 4 bytes for the header
 	aceheader.RawBytesSize = 4
+	aceheader.RawBytes = rawBytes[:aceheader.RawBytesSize]
+}
+
+// ToBytes serializes the AccessControlEntryHeader struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the ACE header.
+func (aceheader *AccessControlEntryHeader) ToBytes() []byte {
+	serializedData := make([]byte, 0)
+
+	serializedData = append(serializedData, aceheader.Type.ToBytes()...)
+	serializedData = append(serializedData, aceheader.Flags.ToBytes()...)
+	buffer := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buffer, aceheader.Size)
+	serializedData = append(serializedData, buffer...)
+
+	return serializedData
 }
 
 // Describe prints a human-readable representation of the AccessControlEntryHeader struct.
@@ -78,7 +96,7 @@ func (aceheader *AccessControlEntryHeader) Parse(RawBytes []byte) {
 func (aceheader *AccessControlEntryHeader) Describe(indent int) {
 	indentPrompt := strings.Repeat(" │ ", indent)
 	fmt.Printf("%s<AccessControlEntryHeader>\n", indentPrompt)
-	fmt.Printf("%s │ \x1b[93mType\x1b[0m  : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aceheader.Type.Value, aceheader.Type.Name)
+	fmt.Printf("%s │ \x1b[93mType\x1b[0m  : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aceheader.Type.Value, aceheader.Type.String())
 	fmt.Printf("%s │ \x1b[93mFlags\x1b[0m : \x1b[96m0x%02x\x1b[0m (\x1b[94m%s\x1b[0m)\n", indentPrompt, aceheader.Flags.RawValue, strings.Join(aceheader.Flags.Flags, "|"))
 	fmt.Printf("%s │ \x1b[93mSize\x1b[0m  : \x1b[96m0x%04x\x1b[0m\n", indentPrompt, aceheader.Size)
 	fmt.Printf("%s └─\n", indentPrompt)

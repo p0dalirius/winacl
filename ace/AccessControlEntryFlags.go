@@ -1,5 +1,7 @@
 package ace
 
+import "strings"
+
 // https://learn.microsoft.com/en-us/dotnet/api/system.security.accesscontrol.aceflags?view=net-8.0
 const (
 	ACE_FLAG_NONE                 = 0x00 // No ACE flags are set.
@@ -53,8 +55,8 @@ var AccessControlEntryFlagToName = map[uint8]string{
 //     entry flag. This value is typically defined by the Windows security
 //     model and determines the permissions or behavior associated with the
 //     flag.
-func (aceflag *AccessControlEntryFlag) Parse(rawValue uint8) {
-	aceflag.RawValue = rawValue
+func (aceflag *AccessControlEntryFlag) Parse(rawValue []byte) {
+	aceflag.RawValue = uint8(rawValue[0])
 	aceflag.Values = []uint8{}
 	aceflag.Flags = []string{}
 
@@ -64,4 +66,16 @@ func (aceflag *AccessControlEntryFlag) Parse(rawValue uint8) {
 			aceflag.Flags = append(aceflag.Flags, flagName)
 		}
 	}
+}
+
+// ToBytes serializes the AccessControlEntryFlag struct into a byte slice.
+//
+// Returns:
+//   - []byte: The serialized byte slice representing the ACE flag.
+func (aceflag *AccessControlEntryFlag) ToBytes() []byte {
+	return []byte{aceflag.RawValue}
+}
+
+func (aceflag *AccessControlEntryFlag) String() string {
+	return strings.Join(aceflag.Flags, "|")
 }

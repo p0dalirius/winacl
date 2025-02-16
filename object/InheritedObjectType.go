@@ -39,6 +39,12 @@ func (inheritedObjType *InheritedObjectType) Parse(RawBytes []byte) {
 	inheritedObjType.GUID.FromRawBytes(RawBytes)
 }
 
+// ToBytes returns the raw byte representation of the ObjectType.
+// It returns the GUID as a byte slice.
+func (inheritedObjType *InheritedObjectType) ToBytes() []byte {
+	return inheritedObjType.GUID.ToBytes()
+}
+
 // Describe prints a formatted representation of the InheritedObjectType instance,
 // including its GUID, to the standard output. The output is indented
 // based on the provided indent level for better readability.
