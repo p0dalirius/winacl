@@ -75,3 +75,73 @@ func TestToFormatX(t *testing.T) {
 		t.Errorf("Expected %s, but got %s", expected, result)
 	}
 }
+
+func TestFromStringToStringFormatN(t *testing.T) {
+	data := "12345678123456789abcdef012345678"
+	guid, err := FromString(data)
+	if err != nil {
+		t.Errorf("Error parsing GUID: %s", err)
+	}
+	if guid != nil {
+		result := guid.ToFormatN()
+		if result != guid.ToFormatN() {
+			t.Errorf("Expected %s, but got %s", data, result)
+		}
+	}
+}
+
+func TestFromStringToStringFormatD(t *testing.T) {
+	data := "12345678-1234-5678-9abc-def012345678"
+	guid, err := FromString(data)
+	if err != nil {
+		t.Errorf("Error parsing GUID: %s", err)
+	}
+	if guid != nil {
+		result := guid.ToFormatD()
+		if result != guid.ToFormatD() {
+			t.Errorf("Expected %s, but got %s", data, result)
+		}
+	}
+}
+
+func TestFromStringToStringFormatB(t *testing.T) {
+	data := "{12345678-1234-5678-9abc-def012345678}"
+	guid, err := FromString(data)
+	if err != nil {
+		t.Errorf("Error parsing GUID: %s", err)
+	}
+	if guid != nil {
+		result := guid.ToFormatB()
+		if result != guid.ToFormatB() {
+			t.Errorf("Expected %s, but got %s", data, result)
+		}
+	}
+}
+
+func TestFromStringToStringFormatP(t *testing.T) {
+	data := "(12345678-1234-5678-9abc-def012345678)"
+	guid, err := FromString(data)
+	if err != nil {
+		t.Errorf("Error parsing GUID: %s", err)
+	}
+	if guid != nil {
+		result := guid.ToFormatP()
+		if result != guid.ToFormatP() {
+			t.Errorf("Expected %s, but got %s", data, result)
+		}
+	}
+}
+
+func TestFromStringToStringFormatX(t *testing.T) {
+	data := "{0x12345678,0x1234,0x5678,{0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78}}"
+	guid, err := FromString(data)
+	if err != nil {
+		t.Errorf("Error parsing GUID: %s", err)
+	}
+	if guid != nil {
+		result := guid.ToFormatX()
+		if result != guid.ToFormatX() {
+			t.Errorf("Expected %s, but got %s", data, result)
+		}
+	}
+}
