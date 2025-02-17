@@ -3,11 +3,20 @@ package guid
 import (
 	"fmt"
 	"math/rand/v2"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/p0dalirius/winacl/rights"
 	"github.com/p0dalirius/winacl/schema"
+)
+
+const (
+	GUID_FORMAT_N_REGEX = "^[0-9a-f]{32}$"
+	GUID_FORMAT_D_REGEX = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+	GUID_FORMAT_B_REGEX = "^\\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\}$"
+	GUID_FORMAT_P_REGEX = "^\\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\)$"
+	GUID_FORMAT_X_REGEX = "^\\{0x[0-9a-f]{8},0x[0-9a-f]{4},0x[0-9a-f]{4},\\{0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2}\\}\\}$"
 )
 
 // GUID represents a globally unique identifier (GUID).
@@ -88,7 +97,69 @@ func (guid *GUID) FromRawBytes(data []byte) {
 	guid.E = guid.E | uint64(data[15])
 }
 
-// FromFormatN parses a GUID from a string in the format N.
+// FromString parses a GUID from a string.
+//
+// The function takes a string and parses it into a GUID.
+//
+// Parameters:
+// - data: A string containing the GUID.
+//
+// Returns:
+// - A pointer to the parsed GUID.
+// - An error if the string is not a valid GUID.
+func FromString(data string) (*GUID, error) {
+	data = strings.TrimSpace(data)
+	data = strings.ToLower(data)
+
+	// Check if the GUID is in the format N: 00000000000000000000000000000000
+	matched, err := regexp.MatchString("^[0-9a-f]{32}$", data)
+	if err != nil {
+		return nil, err
+	}
+	if matched {
+		return FromFormatN(data)
+	}
+
+	// Check if the GUID is in the format D: 00000000-0000-0000-0000-000000000000
+	matched, err = regexp.MatchString("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", data)
+	if err != nil {
+		return nil, err
+	}
+	if matched {
+		return FromFormatD(data)
+	}
+
+	// Check if the GUID is in the format B: {00000000-0000-0000-0000-000000000000}
+	matched, err = regexp.MatchString("^\\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\}$", data)
+	if err != nil {
+		return nil, err
+	}
+	if matched {
+		return FromFormatB(data)
+	}
+
+	// Check if the GUID is in the format P: (00000000-0000-0000-0000-000000000000)
+	matched, err = regexp.MatchString("^\\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\)$", data)
+	if err != nil {
+		return nil, err
+	}
+	if matched {
+		return FromFormatP(data)
+	}
+
+	// Check if the GUID is in the format X: {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}
+	matched, err = regexp.MatchString("^\\{0x[0-9a-f]{8},0x[0-9a-f]{4},0x[0-9a-f]{4},\\{0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2},0x[0-9a-f]{2}\\}\\}$", data)
+	if err != nil {
+		return nil, err
+	}
+	if matched {
+		return FromFormatX(data)
+	}
+
+	return nil, fmt.Errorf("invalid GUID format")
+}
+
+// FromFormatN parses a GUID from a string in the format N: 00000000000000000000000000000000
 //
 // The function takes a string and parses it into a GUID.
 //
@@ -99,6 +170,9 @@ func (guid *GUID) FromRawBytes(data []byte) {
 // - A pointer to the parsed GUID.
 // - An error if the string is not a valid GUID in the format N.
 func FromFormatN(data string) (*GUID, error) {
+	data = strings.TrimSpace(data)
+	data = strings.ToLower(data)
+
 	if len(data) != 32 {
 		return nil, fmt.Errorf("GUID Format N should be 32 hexadecimal characters")
 	}
@@ -125,7 +199,7 @@ func FromFormatN(data string) (*GUID, error) {
 	return &GUID{uint32(a), uint16(b), uint16(c), uint16(d), e}, nil
 }
 
-// FromFormatD parses a GUID from a string in the format D.
+// FromFormatD parses a GUID from a string in the format D: 00000000-0000-0000-0000-000000000000
 //
 // The function takes a string and parses it into a GUID.
 //
@@ -136,6 +210,9 @@ func FromFormatN(data string) (*GUID, error) {
 // - A pointer to the parsed GUID.
 // - An error if the string is not a valid GUID in the format D.
 func FromFormatD(data string) (*GUID, error) {
+	data = strings.TrimSpace(data)
+	data = strings.ToLower(data)
+
 	parts := strings.Split(data, "-")
 	if len(parts) != 5 {
 		return nil, fmt.Errorf("GUID Format D should be 32 hexadecimal characters separated in five parts")
@@ -163,7 +240,7 @@ func FromFormatD(data string) (*GUID, error) {
 	return &GUID{uint32(a), uint16(b), uint16(c), uint16(d), e}, nil
 }
 
-// FromFormatB parses a GUID from a string in the format B.
+// FromFormatB parses a GUID from a string in the format B: {00000000-0000-0000-0000-000000000000}
 //
 // The function takes a string and parses it into a GUID.
 //
@@ -174,13 +251,17 @@ func FromFormatD(data string) (*GUID, error) {
 // - A pointer to the parsed GUID.
 // - An error if the string is not a valid GUID in the format B.
 func FromFormatB(data string) (*GUID, error) {
+	data = strings.TrimSpace(data)
+	data = strings.ToLower(data)
+
 	if data[0] != '{' || data[len(data)-1] != '}' {
 		return nil, fmt.Errorf("GUID Format B should be 32 hexadecimal characters separated in five parts enclosed in braces")
 	}
+
 	return FromFormatD(data[1 : len(data)-1])
 }
 
-// FromFormatP parses a GUID from a string in the format P.
+// FromFormatP parses a GUID from a string in the format P: (00000000-0000-0000-0000-000000000000)
 //
 // The function takes a string and parses it into a GUID.
 //
@@ -191,13 +272,17 @@ func FromFormatB(data string) (*GUID, error) {
 // - A pointer to the parsed GUID.
 // - An error if the string is not a valid GUID in the format P.
 func FromFormatP(data string) (*GUID, error) {
+	data = strings.TrimSpace(data)
+	data = strings.ToLower(data)
+
 	if data[0] != '(' || data[len(data)-1] != ')' {
 		return nil, fmt.Errorf("GUID Format P should be 32 hexadecimal characters separated in five parts enclosed in parentheses")
 	}
+
 	return FromFormatD(data[1 : len(data)-1])
 }
 
-// FromFormatX parses a GUID from a string in the format X.
+// FromFormatX parses a GUID from a string in the format X: {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}
 //
 // The function takes a string and parses it into a GUID.
 //
@@ -208,47 +293,55 @@ func FromFormatP(data string) (*GUID, error) {
 // - A pointer to the parsed GUID.
 // - An error if the string is not a valid GUID in the format X.
 func FromFormatX(data string) (*GUID, error) {
-	if data[0] != '{' || data[len(data)-1] != '}' {
+	data = strings.TrimSpace(data)
+	data = strings.ToLower(data)
+
+	matched, err := regexp.MatchString(GUID_FORMAT_X_REGEX, data)
+	if err != nil {
 		return nil, fmt.Errorf("GUID Format X should be in this format {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}")
 	}
-	parts := strings.Split(data[1:len(data)-1], ",")
-	if len(parts) != 4 {
+	if !matched {
 		return nil, fmt.Errorf("GUID Format X should be in this format {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}")
 	}
+
+	data = strings.Replace(data, "{", "", -1)
+	data = strings.Replace(data, "}", "", -1)
+
+	parts := strings.Split(data, ",")
+	if len(parts) != 11 {
+		return nil, fmt.Errorf("GUID Format X should be in this format {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}")
+	}
+
 	a, err := strconv.ParseUint(parts[0][2:], 16, 32)
 	if err != nil {
 		return nil, err
 	}
+
 	b, err := strconv.ParseUint(parts[1][2:], 16, 16)
 	if err != nil {
 		return nil, err
 	}
+
 	c, err := strconv.ParseUint(parts[2][2:], 16, 16)
 	if err != nil {
 		return nil, err
 	}
-	subParts := strings.Split(parts[3][1:len(parts[3])-1], ",")
-	if len(subParts) != 8 {
-		return nil, fmt.Errorf("GUID Format X should be in this format {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}")
-	}
-	d1, err := strconv.ParseUint(subParts[0][2:], 16, 8)
+
+	d, err := strconv.ParseUint(parts[3][2:], 16, 8)
 	if err != nil {
 		return nil, err
 	}
-	d2, err := strconv.ParseUint(subParts[1][2:], 16, 8)
-	if err != nil {
-		return nil, err
-	}
-	d := uint16(d1)<<8 | uint16(d2)
+
 	e := uint64(0)
-	for i := 2; i < 8; i++ {
-		val, err := strconv.ParseUint(subParts[i][2:], 16, 8)
+	for i := 0; i < 8; i++ {
+		val, err := strconv.ParseUint(parts[3+i][2:], 16, 8)
 		if err != nil {
 			return nil, err
 		}
 		e = e<<8 | val
 	}
-	return &GUID{uint32(a), uint16(b), uint16(c), d, e}, nil
+
+	return &GUID{uint32(a), uint16(b), uint16(c), uint16(d), e}, nil
 }
 
 // Export functions ===================================================================
@@ -276,7 +369,7 @@ func (guid *GUID) ToBytes() []byte {
 	return data
 }
 
-// ToFormatN returns the GUID in the format N.
+// ToFormatN returns the GUID in the format N: 00000000000000000000000000000000
 //
 // The function converts the GUID into a string in the format N.
 //
@@ -286,7 +379,7 @@ func (guid *GUID) ToFormatN() string {
 	return fmt.Sprintf("%08x%04x%04x%04x%012x", guid.A, guid.B, guid.C, guid.D, guid.E)
 }
 
-// ToFormatD returns the GUID in the format D.
+// ToFormatD returns the GUID in the format D: 00000000-0000-0000-0000-000000000000
 //
 // The function converts the GUID into a string in the format D.
 //
@@ -296,7 +389,7 @@ func (guid *GUID) ToFormatD() string {
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", guid.A, guid.B, guid.C, guid.D, guid.E)
 }
 
-// ToFormatB returns the GUID in the format B.
+// ToFormatB returns the GUID in the format B: {00000000-0000-0000-0000-000000000000}
 //
 // The function converts the GUID into a string in the format B.
 //
@@ -306,7 +399,7 @@ func (guid *GUID) ToFormatB() string {
 	return fmt.Sprintf("{%08x-%04x-%04x-%04x-%012x}", guid.A, guid.B, guid.C, guid.D, guid.E)
 }
 
-// ToFormatP returns the GUID in the format P.
+// ToFormatP returns the GUID in the format P: (00000000-0000-0000-0000-000000000000)
 //
 // The function converts the GUID into a string in the format P.
 //
@@ -316,7 +409,7 @@ func (guid *GUID) ToFormatP() string {
 	return fmt.Sprintf("(%08x-%04x-%04x-%04x-%012x)", guid.A, guid.B, guid.C, guid.D, guid.E)
 }
 
-// ToFormatX returns the GUID in the format X.
+// ToFormatX returns the GUID in the format X: {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}
 //
 // The function converts the GUID into a string in the format X.
 //
